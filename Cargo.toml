@@ -7,7 +7,7 @@ homepage = "https://github.com/GreyNoise-Intelligence/precursor"
 repository = "https://github.com/GreyNoise-Intelligence/precursor"
 description = "A data analysis tool for text and binary tagging and filtering with similarity comparisons."
 readme = "README.md"
-keywords = ["binary", "tool", "analysis", "similarity", "hashing", "forensics"]
+keywords = ["binary", "tool", "analysis", "similarity", "hashing"]
 license = "MIT"
 categories = ["command-line-utilities", "filesystem", "datascience"]
 
