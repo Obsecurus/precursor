@@ -1,0 +1,4 @@
+interface:
+  display_name: "Precursor Maintainer"
+  short_description: "Maintain and evolve the Precursor codebase"
+  default_prompt: "Use $precursor-maintainer to review and implement robust improvements in this repository."

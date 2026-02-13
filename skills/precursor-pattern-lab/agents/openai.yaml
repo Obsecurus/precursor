@@ -1,0 +1,4 @@
+interface:
+  display_name: "Precursor Pattern Lab"
+  short_description: "Design and validate PCRE2 pattern packs"
+  default_prompt: "Use $precursor-pattern-lab to create, test, and tune high-signal pattern files."

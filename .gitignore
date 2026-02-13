@@ -1,3 +1,6 @@
 target/
 samples/*.json
 README_files/*
+.env
+.env.*
+*.DS_Store

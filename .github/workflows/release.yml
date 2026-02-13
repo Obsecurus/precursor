@@ -4,7 +4,7 @@ name: release
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]*.[0-9]*.[0-9]*"
 
 # We need this to be able to create releases.
 permissions:
@@ -20,8 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Get the release version from the tag
-        if: env.VERSION == ''
-        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+        id: release_version
+        shell: bash
+        run: |
+          version="${{ github.ref_name }}"
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
       - name: Show the version
         run: |
           echo "version is: $VERSION"
@@ -37,11 +41,47 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create $VERSION --draft --verify-tag --title $VERSION
     outputs:
-      version: ${{ env.VERSION }}
+      version: ${{ steps.release_version.outputs.version }}
+
+  generate-cli-assets:
+    name: generate-cli-assets
+    needs: ["create-release"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Install help2man
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y help2man
+
+      - name: Build precursor (host)
+        shell: bash
+        run: cargo build --release
+
+      - name: Generate completions and man page
+        shell: bash
+        run: |
+          set -euo pipefail
+          ci/generate_cli_assets.sh dist/cli-assets ./target/release/precursor
+
+      - name: Upload CLI assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: precursor-cli-assets
+          path: dist/cli-assets
+          if-no-files-found: error
 
   build-release:
     name: build-release
-    needs: ["create-release"]
+    needs: ["create-release", "generate-cli-assets"]
     runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
@@ -197,50 +237,11 @@ jobs:
           cp {README.md,COPYING,UNLICENSE,LICENSE-MIT} "$ARCHIVE"/
           cp CHANGELOG.md "$ARCHIVE"/doc/
 
-      #- name: Generate man page and completions (no emulation)
-      #  if: matrix.qemu == ''
-      #  shell: bash
-      #  run: |
-      #    "$BIN" --version
-      #    "$BIN" --generate complete-bash > "$ARCHIVE/complete/precursor.bash"
-      #    "$BIN" --generate complete-fish > "$ARCHIVE/complete/precursor.fish"
-      #    "$BIN" --generate complete-powershell > "$ARCHIVE/complete/_precursor.ps1"
-      #    "$BIN" --generate complete-zsh > "$ARCHIVE/complete/_precursor"
-      #    "$BIN" --generate man > "$ARCHIVE/doc/precursor.1"
-
-      #- name: Generate man page and completions (emulation)
-      #  if: matrix.qemu != ''
-      #  shell: bash
-      #  run: |
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" --version
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" \
-      #        --generate complete-bash > "$ARCHIVE/complete/precursor.bash"
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" \
-      #        --generate complete-fish > "$ARCHIVE/complete/precursor.fish"
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" \
-      #        --generate complete-powershell > "$ARCHIVE/complete/_precursor.ps1"
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" \
-      #        --generate complete-zsh > "$ARCHIVE/complete/_precursor"
-      #    docker run --rm -v \
-      #      "$PWD/target:/target:Z" \
-      #      "rustembedded/cross:${{ matrix.target }}" \
-      #      "${{ matrix.qemu }}" "/$BIN" \
-      #        --generate man > "$ARCHIVE/doc/precursor.1"
+      - name: Download CLI assets
+        uses: actions/download-artifact@v4
+        with:
+          name: precursor-cli-assets
+          path: ${{ env.ARCHIVE }}
 
       - name: Build archive (Windows)
         shell: bash
@@ -299,37 +300,6 @@ jobs:
         shell: bash
         run: |
           cargo install cargo-deb
-
-      # 'cargo deb' does not seem to provide a way to specify an asset that is
-      # created at build time, such as precursor's man page. To work around this,
-      # we force a debug build, copy out the man page (and shell completions)
-      # produced from that build, put it into a predictable location and then
-      # build the deb, which knows where to look.
-      - name: Build debug binary to create release assets
-        shell: bash
-        run: |
-          cargo build --target ${{ env.TARGET }}
-          bin="target/${{ env.TARGET }}/debug/precursor"
-          echo "BIN=$bin" >> $GITHUB_ENV
-
-      - name: Create deployment directory
-        shell: bash
-        run: |
-          dir=deployment/deb
-          mkdir -p "$dir"
-          echo "DEPLOY_DIR=$dir" >> $GITHUB_ENV
-
-      #- name: Generate man page
-      #  shell: bash
-      #  run: |
-      #    "$BIN" --generate man > "$DEPLOY_DIR/precursor.1"
-
-      #- name: Generate shell completions
-      #  shell: bash
-      #  run: |
-      #    "$BIN" --generate complete-bash > "$DEPLOY_DIR/precursor.bash"
-      #    "$BIN" --generate complete-fish > "$DEPLOY_DIR/precursor.fish"
-      #    "$BIN" --generate complete-zsh > "$DEPLOY_DIR/_precursor"
 
       - name: Build release binary
         shell: bash

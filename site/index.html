@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Precursor | Pre-Protocol Similarity Triage</title>
+    <meta
+      name="description"
+      content="Precursor turns raw payloads into protocol hints, similarity clusters, and fast triage output."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-layer"></div>
+    <main>
+      <header class="hero">
+        <p class="kicker">precursor.hashdb.io</p>
+        <h1>Pre-Protocol Payload Triage for Packets, Logs, and Firmware Fragments</h1>
+        <p class="hero-copy">
+          Precursor tags payloads with named captures, clusters near-matches with
+          TLSH/LZJD (and optional MRSHv2 adapter mode), and emits JSON designed
+          for SOC pipelines and LLM-guided protocol discovery loops.
+        </p>
+        <div class="hero-cta">
+          <a href="https://github.com/Obsecurus/precursor" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="#demo">Try Demo Scenarios</a>
+        </div>
+      </header>
+
+      <section class="stats">
+        <article>
+          <h2>Dual Input Shapes</h2>
+          <p>Text/base64/hex now, raw-binary expansion in active roadmap.</p>
+        </article>
+        <article>
+          <h2>Similarity Modes</h2>
+          <p>TLSH + LZJD implemented, MRSHv2 available behind native adapter feature.</p>
+        </article>
+        <article>
+          <h2>Discovery Loop</h2>
+          <p>Protocol hints + single-packet inference for human and LLM analysis loops.</p>
+        </article>
+      </section>
+
+      <section class="teaser" aria-label="Why install teaser">
+        <div class="teaser-head">
+          <h2>Why Install Precursor</h2>
+          <p>
+            One command turns opaque payload streams into tags, clusters, and
+            protocol confidence output you can act on immediately.
+          </p>
+        </div>
+        <div class="teaser-stage">
+          <article class="teaser-lane">
+            <h3>Input stream</h3>
+            <div class="chip-stack">
+              <span class="chip chip-http">GET /admin HTTP/1.1</span>
+              <span class="chip chip-tls">16 03 03 ...</span>
+              <span class="chip chip-ics">00 01 00 00 00 06 11 03 ...</span>
+            </div>
+          </article>
+          <div class="teaser-arrow" aria-hidden="true">→</div>
+          <article class="teaser-lane">
+            <h3>Tag + similarity</h3>
+            <ul class="teaser-list">
+              <li><code>tags: ["http_method"]</code></li>
+              <li><code>similarity_hash: "lzjd:..."</code></li>
+              <li><code>tlsh_similarities: {...}</code></li>
+            </ul>
+          </article>
+          <div class="teaser-arrow" aria-hidden="true">→</div>
+          <article class="teaser-lane">
+            <h3>Actionable triage</h3>
+            <div class="cluster-view">
+              <div class="cluster-row">
+                <span>http</span>
+                <strong>0.93</strong>
+              </div>
+              <div class="cluster-row">
+                <span>tls</span>
+                <strong>0.90</strong>
+              </div>
+              <div class="cluster-row">
+                <span>firmware_binary</span>
+                <strong>0.86</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="teaser-terminal">
+          <div class="code-head">
+            <span>Sample JSON line</span>
+          </div>
+          <pre><code>{"protocol_label":"http","protocol_confidence":0.93,"similarity_hash":"lzjd:128:...","tags":["http_method"]}</code></pre>
+        </div>
+      </section>
+
+      <section id="demo" class="demo">
+        <div class="demo-head">
+          <h2>Scenario Demos</h2>
+          <p>These examples map directly to files committed under <code>samples/scenarios/</code>.</p>
+        </div>
+        <nav class="scenario-tabs" id="scenario-tabs" aria-label="Scenario tabs"></nav>
+        <article class="scenario-panel" id="scenario-panel">
+          <h3 id="scenario-title"></h3>
+          <p id="scenario-description"></p>
+          <div class="code-wrap">
+            <div class="code-head">
+              <span>Command</span>
+              <button id="copy-command" type="button">Copy</button>
+            </div>
+            <pre><code id="scenario-command"></code></pre>
+          </div>
+          <div class="code-wrap">
+            <div class="code-head">
+              <span>Expected signal</span>
+            </div>
+            <pre><code id="scenario-output"></code></pre>
+          </div>
+        </article>
+      </section>
+
+      <section class="use-cases">
+        <h2>High-Impact Use Cases</h2>
+        <div class="cards">
+          <article>
+            <h3>Exploit Spray Triage</h3>
+            <p>Cluster scanner traffic before parser development and identify repeated payload families quickly.</p>
+          </article>
+          <article>
+            <h3>ICS/OT Packet Discovery</h3>
+            <p>Start from single packets when DPI fails or protocol metadata is missing.</p>
+          </article>
+          <article>
+            <h3>Firmware Fragment Sorting</h3>
+            <p>Tag binary fragments by magic + similarity to route unknown blobs to the right analyst workflow.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="deploy">
+        <h2>Deploy This Site to GitHub Pages</h2>
+        <ol>
+          <li>Enable Pages in repository settings and select GitHub Actions as source.</li>
+          <li>Create DNS record: <code>precursor.hashdb.io CNAME obsecurus.github.io</code>.</li>
+          <li>Push to <code>main</code>; workflow <code>pages.yml</code> publishes <code>site/</code>.</li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

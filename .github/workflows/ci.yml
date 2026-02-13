@@ -159,3 +159,36 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --no-deps --document-private-items --workspace
+
+  mrshv2-ffi-smoke:
+    name: mrshv2-ffi-smoke
+    runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install packages (Ubuntu)
+        run: |
+          ci/ubuntu-install-packages
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Build MRSHv2 mock adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          mock_dir="$RUNNER_TEMP/mrshv2-mock"
+          mkdir -p "$mock_dir"
+          ci/build_mrshv2_mock.sh "$mock_dir"
+          echo "PRECURSOR_MRSHV2_LIB_DIR=$mock_dir" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$mock_dir:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+
+      - name: Run tests with MRSHv2 feature enabled
+        shell: bash
+        run: |
+          cargo test --verbose --workspace --features similarity-mrshv2

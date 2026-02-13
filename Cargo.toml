@@ -1,15 +1,29 @@
 [package]
 name = "precursor"
 build = "build.rs"
-version = "0.1.1"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.86"
 authors = ["Matt Lehman <obsecurus@users.noreply.github.com>"]
-homepage = "https://github.com/GreyNoise-Intelligence/precursor"
-repository = "https://github.com/GreyNoise-Intelligence/precursor"
-description = "A data analysis tool for text and binary tagging and filtering with similarity comparisons."
+homepage = "https://precursor.hashdb.io"
+repository = "https://github.com/Obsecurus/precursor"
+documentation = "https://github.com/Obsecurus/precursor#readme"
+description = "Pre-protocol payload tagging, similarity clustering, and packet/firmware triage CLI."
 readme = "README.md"
-keywords = ["binary", "tool", "analysis", "similarity", "hashing"]
-license = "MIT"
+keywords = ["ids", "forensics", "similarity", "packet", "firmware"]
+license = "MIT OR Unlicense"
 categories = ["command-line-utilities", "filesystem", "datascience"]
+exclude = [
+  ".env",
+  ".env.*",
+  ".DS_Store",
+  "samples/.DS_Store",
+  "README_files/*",
+]
+
+[features]
+default = []
+similarity-mrshv2 = []
 
 [dependencies]
 xxhash-rust = { version = "0.8.0", features = ["xxh3", "const_xxh3"] }
@@ -33,6 +47,3 @@ path = "src/main.rs"
 
 [profile.release]
 debug = false
-
-[build-dependencies]
-clap_mangen = "0.2.14"

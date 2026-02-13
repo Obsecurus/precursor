@@ -1,59 +1,48 @@
 # Release Checklist
 
-* Ensure local `main` is up to date with respect to `origin/main`.
-* Run `cargo update` and review dependency updates. Commit updated
-  `Cargo.lock`.
-* Run `cargo outdated` and review semver incompatible updates. Unless there is
-  a strong motivation otherwise, review and update every dependency. Also
-  run `--aggressive`, but don't update to crates that are still in beta.
-* Update date in `crates/core/flags/doc/template.rg.1`.
-* Review changes for every crate in `crates` since the last ripgrep release.
-  If the set of changes is non-empty, issue a new release for that crate. Check
-  crates in the following order. After updating a crate, ensure minimal
-  versions are updated as appropriate in dependents. If an update is required,
-  run `cargo-up --no-push crates/{CRATE}/Cargo.toml`.
-    * crates/globset
-    * crates/ignore
-    * crates/cli
-    * crates/matcher
-    * crates/regex
-    * crates/pcre2
-    * crates/searcher
-    * crates/printer
-    * crates/grep (bump minimal versions as necessary)
-    * crates/core (do **not** bump version, but update dependencies as needed)
-* Update the CHANGELOG as appropriate.
-* Edit the `Cargo.toml` to set the new ripgrep version. Run
-  `cargo update -p ripgrep` so that the `Cargo.lock` is updated. Commit the
-  changes and create a new signed tag. Alternatively, use
-  `cargo-up --no-push --no-release Cargo.toml {VERSION}` to automate this.
-* Run `cargo package` and ensure it succeeds.
-* Push changes to GitHub, NOT including the tag. (But do not publish a new
-  version of ripgrep to crates.io yet.)
-* Once CI for `main` finishes successfully, push the version tag. (Trying to
-  do this in one step seems to result in GitHub Actions not seeing the tag
-  push and thus not running the release workflow.)
-* Wait for CI to finish creating the release. If the release build fails, then
-  delete the tag from GitHub, make fixes, re-tag, delete the release and push.
-* Copy the relevant section of the CHANGELOG to the tagged release notes.
-  Include this blurb describing what ripgrep is:
-  > In case you haven't heard of it before, ripgrep is a line-oriented search
-  > tool that recursively searches the current directory for a regex pattern.
-  > By default, ripgrep will respect gitignore rules and automatically skip
-  > hidden files/directories and binary files.
-* Run `git checkout {VERSION} && ci/build-and-publish-m2 {VERSION}` on a macOS
-  system with Apple silicon.
-* Run `cargo publish`.
-* Run `ci/sha256-releases {VERSION} >> pkg/brew/ripgrep-bin.rb`. Then edit
-  `pkg/brew/ripgrep-bin.rb` to update the version number and sha256 hashes.
-  Remove extraneous stuff added by `ci/sha256-releases`. Commit changes.
-* Add TBD section to the top of the CHANGELOG:
-  ```
-  TBD
-  ===
-  Unreleased changes. Release notes have not yet been written.
-  ```
+## 1) Prepare
 
-Note that [`cargo-up` can be found in BurntSushi's dotfiles][dotfiles].
+- Ensure local `main` is up to date with `origin/main`.
+- Confirm `Cargo.toml` version is the intended release version.
+- Review dependency updates (`cargo update`) and commit `Cargo.lock` changes if needed.
+- Update `CHANGELOG.md` with release notes for this version.
 
-[dotfiles]: https://github.com/BurntSushi/dotfiles/blob/master/bin/cargo-up
+## 2) Validate
+
+- Confirm toolchain pin is available locally: `rustup toolchain install 1.86.0 --profile minimal`.
+- Run formatting: `cargo fmt --all --check`.
+- Run tests (unit + integration): `cargo test --workspace`.
+- Build release binary: `cargo build --release`.
+- Verify CLI assets script output: `ci/generate_cli_assets.sh /tmp/precursor-cli-assets ./target/release/precursor`.
+- Verify CLI help renders: `./target/release/precursor --help`.
+- Smoke test implemented similarity modes:
+  - TLSH: `printf 'aGVsbG8=\n' | ./target/release/precursor '(?<h>hello)' -m base64 -t --similarity-mode tlsh`
+  - LZJD: `printf 'GET / HTTP/1.1\n' | ./target/release/precursor '(?<g>GET)' -m string -t --similarity-mode lzjd`
+- Smoke test MRSHv2 adapter mode:
+  - `mock_dir="$(mktemp -d)" && ci/build_mrshv2_mock.sh "$mock_dir"`
+  - `PRECURSOR_MRSHV2_LIB_DIR="$mock_dir" LD_LIBRARY_PATH="$mock_dir:${LD_LIBRARY_PATH:-}" cargo test --workspace --features similarity-mrshv2`
+- Refresh benchmark snapshot:
+  - `ci/benchmark_scenarios.sh ./target/release/precursor benchmarks/latest.md`
+
+## 3) Tag and push
+
+- Commit release prep changes.
+- If releasing manually, create and sign tag: `git tag -s <x.y.z> -m "<x.y.z>"`.
+- Push branch first, then push tag after CI on branch passes.
+- If dependency updates were merged without a version bump:
+  - `.github/workflows/auto-bump-version.yml` bumps patch version automatically.
+  - `.github/workflows/auto-tag-release.yml` tags the new version automatically.
+
+## 4) CI release
+
+- Confirm GitHub Actions release workflow completed successfully.
+- Confirm MRSHv2 feature smoke job passed in CI (`mrshv2-ffi-smoke`).
+- Confirm archives/checksums were attached to the GitHub release draft.
+- Promote draft release after artifact validation.
+
+## 5) Post-release
+
+- Verify install path(s) (`cargo install precursor` and release binaries).
+- Verify GitHub Pages demo site deployment and custom domain (`precursor.hashdb.io`) health.
+- Add next `TBD`/unreleased section to `CHANGELOG.md`.
+- Announce release with notable changes and known limitations.

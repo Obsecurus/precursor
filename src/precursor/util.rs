@@ -14,13 +14,16 @@ pub fn remove_wrapped_quotes(input: &str) -> &str {
         .trim_end_matches(|c| c == '"' || c == '\'')
 }
 
-pub fn get_payload(line: &str, input_mode: &str) -> Vec<u8> {
+pub fn get_payload(line: &str, input_mode: &str) -> Result<Vec<u8>, String> {
     let line_with_no_wrapped_quotes = remove_wrapped_quotes(line);
     match input_mode {
-        "base64" => STANDARD.decode(line_with_no_wrapped_quotes).unwrap(),
-        "string" => line_with_no_wrapped_quotes.as_bytes().to_vec(),
-        "hex" => hex::decode(line_with_no_wrapped_quotes).unwrap(),
-        _ => panic!("{} not a supported input mode.", input_mode),
+        "base64" => STANDARD
+            .decode(line_with_no_wrapped_quotes)
+            .map_err(|err| format!("invalid base64 payload: {}", err)),
+        "string" => Ok(line_with_no_wrapped_quotes.as_bytes().to_vec()),
+        "hex" => hex::decode(line_with_no_wrapped_quotes)
+            .map_err(|err| format!("invalid hex payload: {}", err)),
+        _ => Err(format!("{} not a supported input mode.", input_mode)),
     }
 }
 
@@ -43,18 +46,18 @@ pub fn format_size(size: i64) -> String {
     }
 }
 
-pub fn read_patterns(pattern_file: Option<&PathBuf>) -> Vec<String> {
+pub fn read_patterns(pattern_file: Option<&PathBuf>) -> Result<Vec<String>, std::io::Error> {
     let mut patterns = Vec::new();
     if let Some(path) = pattern_file {
-        let file_contents = std::fs::read_to_string(path).unwrap();
+        let file_contents = std::fs::read_to_string(path)?;
         for line in file_contents.lines() {
             patterns.push(line.to_owned());
         }
     }
-    patterns
+    Ok(patterns)
 }
 
-pub fn build_regex(pattern: &String) -> Result<Regex, Box<dyn std::error::Error>> {
+pub fn build_regex(pattern: &str) -> Result<Regex, Box<dyn std::error::Error>> {
     let re = RegexBuilder::new()
         // NOTE: We should only enable JIT if we're going to compile all patterns into one large PCRE2 statement
         // TODO: Pass CLI flags for certain REGEX settings down to the builder.
@@ -96,11 +99,14 @@ mod tests {
     // Test for `get_payload` function
     #[test]
     fn test_get_payload() {
-        assert_eq!(get_payload("aGVsbG8=", "base64"), b"hello".to_vec());
-        assert_eq!(get_payload("hello", "string"), b"hello".to_vec());
-        assert_eq!(get_payload("68656c6c6f", "hex"), b"hello".to_vec());
+        assert_eq!(
+            get_payload("aGVsbG8=", "base64").unwrap(),
+            b"hello".to_vec()
+        );
+        assert_eq!(get_payload("hello", "string").unwrap(), b"hello".to_vec());
+        assert_eq!(get_payload("68656c6c6f", "hex").unwrap(), b"hello".to_vec());
 
-        let result = std::panic::catch_unwind(|| get_payload("hello", "invalid_mode"));
+        let result = get_payload("hello", "invalid_mode");
         assert!(result.is_err());
     }
 
@@ -129,7 +135,7 @@ mod tests {
         writeln!(temp_file, "pattern1\npattern2").expect("Failed to write to temp file");
 
         // Test: Read patterns from the file
-        let patterns = read_patterns(Some(&temp_file_path.to_path_buf()));
+        let patterns = read_patterns(Some(&temp_file_path.to_path_buf())).unwrap();
         assert_eq!(patterns, vec!["pattern1", "pattern2"]);
 
         // Clean up: Remove the temporary file
@@ -139,7 +145,7 @@ mod tests {
     // Test for `build_regex` function
     #[test]
     fn test_build_regex() {
-        assert!(build_regex(&"\\d+".to_string()).is_ok());
-        assert!(build_regex(&"[InvalidRegex".to_string()).is_err());
+        assert!(build_regex("\\d+").is_ok());
+        assert!(build_regex("[InvalidRegex").is_err());
     }
 }
