@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Precursor logo</title>
+  <desc id="desc">A radar-inspired emblem and wordmark for the Precursor project.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#081226"/>
+      <stop offset="100%" stop-color="#0e2d45"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#32d8ff"/>
+      <stop offset="100%" stop-color="#73ffb8"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#58f0ff" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#58f0ff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="360" rx="26" fill="url(#bg)"/>
+
+  <g transform="translate(180 180)">
+    <circle cx="0" cy="0" r="108" fill="none" stroke="#1f4f69" stroke-width="2"/>
+    <circle cx="0" cy="0" r="82" fill="none" stroke="#1f4f69" stroke-width="2"/>
+    <circle cx="0" cy="0" r="56" fill="none" stroke="#1f4f69" stroke-width="2"/>
+    <path d="M0 0 L104 -36 A110 110 0 0 1 55 96 Z" fill="url(#beam)"/>
+    <circle cx="0" cy="0" r="108" fill="none" stroke="url(#ring)" stroke-width="4" filter="url(#softGlow)"/>
+    <circle cx="0" cy="0" r="82" fill="none" stroke="#2fbad8" stroke-width="3" opacity="0.65"/>
+    <circle cx="0" cy="0" r="56" fill="none" stroke="#5ceaa8" stroke-width="3" opacity="0.85"/>
+    <circle cx="36" cy="-58" r="6" fill="#79ffd2" filter="url(#softGlow)"/>
+    <circle cx="64" cy="24" r="5" fill="#4fdfff" filter="url(#softGlow)"/>
+
+    <path d="M-24 -74 H18 C52 -74 74 -54 74 -24 C74 4 55 25 24 29 H-24 Z" fill="none" stroke="#e7fbff" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M-24 -74 H24 C38 -74 50 -64 50 -49 C50 -34 38 -22 23 -22 H-24 Z" fill="#0d2436"/>
+    <path d="M-24 -74 H26 C55 -74 75 -54 75 -24 C75 5 55 26 26 30 H-24" fill="none" stroke="#92fff0" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(338 150)">
+    <text x="0" y="50" fill="#f4fdff" font-family="'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="96" font-weight="700" letter-spacing="3">
+      PRECURSOR
+    </text>
+    <text x="2" y="97" fill="#74dff8" font-family="'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" letter-spacing="4">
+      PAYLOAD TAGGING AND SIMILARITY ANALYSIS
+    </text>
+  </g>
+</svg>

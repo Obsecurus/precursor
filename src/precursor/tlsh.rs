@@ -18,24 +18,24 @@ pub enum TlshBuilderInstance {
 }
 
 impl TlshHashInstance {
-    pub fn diff(&self, other: &Self, include_file_length: bool) -> i32 {
+    pub fn diff(&self, other: &Self, include_file_length: bool) -> Option<i32> {
         match (self, other) {
             (TlshHashInstance::Tlsh48_1(hash1), TlshHashInstance::Tlsh48_1(hash2)) => {
-                hash1.diff(hash2, include_file_length)
+                Some(hash1.diff(hash2, include_file_length))
             }
             (TlshHashInstance::Tlsh128_1(hash1), TlshHashInstance::Tlsh128_1(hash2)) => {
-                hash1.diff(hash2, include_file_length)
+                Some(hash1.diff(hash2, include_file_length))
             }
             (TlshHashInstance::Tlsh128_3(hash1), TlshHashInstance::Tlsh128_3(hash2)) => {
-                hash1.diff(hash2, include_file_length)
+                Some(hash1.diff(hash2, include_file_length))
             }
             (TlshHashInstance::Tlsh256_1(hash1), TlshHashInstance::Tlsh256_1(hash2)) => {
-                hash1.diff(hash2, include_file_length)
+                Some(hash1.diff(hash2, include_file_length))
             }
             (TlshHashInstance::Tlsh256_3(hash1), TlshHashInstance::Tlsh256_3(hash2)) => {
-                hash1.diff(hash2, include_file_length)
+                Some(hash1.diff(hash2, include_file_length))
             }
-            _ => panic!("Incompatible hash types"),
+            _ => None,
         }
     }
 

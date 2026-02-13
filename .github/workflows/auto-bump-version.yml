@@ -1,0 +1,63 @@
+name: auto-bump-version
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.lock
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump patch version when dependencies changed without version update
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            echo "No valid previous commit SHA, skipping."
+            exit 0
+          fi
+
+          if ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$before"
+          fi
+
+          prev_version="$(git show "$before:Cargo.toml" | sed -n 's/^version = "\(.*\)"/\1/p' | head -n1 || true)"
+          curr_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1 || true)"
+
+          if [ -z "$prev_version" ] || [ -z "$curr_version" ]; then
+            echo "Unable to determine versions, skipping."
+            exit 0
+          fi
+
+          if [ "$prev_version" != "$curr_version" ]; then
+            echo "Version already changed ($prev_version -> $curr_version), skipping."
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$before" "$GITHUB_SHA")"
+          if ! printf '%s\n' "$changed_files" | grep -qx "Cargo.lock"; then
+            echo "No Cargo.lock change detected, skipping."
+            exit 0
+          fi
+
+          new_version="$(ci/bump_patch_version.sh Cargo.toml)"
+          echo "Bumped patch version to $new_version"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore(release): bump version to $new_version after dependency updates"
+          git push

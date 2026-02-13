@@ -1,0 +1,5 @@
+(?<elf_magic>^\x7fELF)
+(?<pe_mz_magic>^MZ)
+(?<uimage_magic>^\x27\x05\x19\x56)
+(?<gzip_magic>^\x1f\x8b)
+(?<high_entropy_blob>^[\x00-\xff]{24,}$)

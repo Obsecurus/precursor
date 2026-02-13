@@ -1,0 +1,5 @@
+(?<http_method>(GET|POST|HEAD|PUT|DELETE) )
+(?<tls_handshake_record>^\x16\x03[\x00-\x04])
+(?<ssh_banner>^SSH-\d\.\d-)
+(?<dns_qname_example>example\.com)
+(?<modbus_mbap>^\x00[\x00-\xff]\x00\x00\x00[\x02-\x10]\x11[\x01-\x7f])

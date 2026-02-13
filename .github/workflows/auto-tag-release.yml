@@ -1,0 +1,58 @@
+name: auto-tag-release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.toml
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release tag from Cargo.toml version bump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            echo "No valid previous commit SHA, skipping."
+            exit 0
+          fi
+
+          if ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$before"
+          fi
+
+          prev_version="$(git show "$before:Cargo.toml" | sed -n 's/^version = "\(.*\)"/\1/p' | head -n1 || true)"
+          curr_version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1 || true)"
+
+          if [ -z "$prev_version" ] || [ -z "$curr_version" ]; then
+            echo "Unable to determine versions, skipping."
+            exit 0
+          fi
+
+          if [ "$prev_version" = "$curr_version" ]; then
+            echo "Version did not change, skipping."
+            exit 0
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$curr_version" >/dev/null; then
+            echo "Tag $curr_version already exists, skipping."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$curr_version" -m "$curr_version"
+          git push origin "$curr_version"
