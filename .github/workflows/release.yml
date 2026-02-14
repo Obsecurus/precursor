@@ -274,7 +274,7 @@ jobs:
     needs: ["create-release"]
     runs-on: ubuntu-latest
     env:
-      TARGET: x86_64-unknown-linux-musl
+      TARGET: x86_64-unknown-linux-gnu
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
       # Since we're distributing the dpkg, we don't know whether the user will
