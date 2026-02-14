@@ -1,0 +1,39 @@
+title: Suspicious Shell Commands
+id: d2bd6b47-0fe3-4eec-846d-6d657c8ee6ff
+status: test
+description: Detects suspicious shell commands being used in Linux shell history
+author: Florian Roth
+references:
+  - https://github.com/SigmaHQ/sigma/blob/master/rules/linux/builtin/lnx_shell_susp_commands.yml
+date: 2021-05-04
+tags:
+  - attack.execution
+  - attack.t1059.004
+logsource:
+  product: linux
+  service: shell
+detection:
+  keywords:
+    - '*chmod +s*'
+    - '*chmod 4777*'
+    - '*chown root*'
+    - '*wget *'
+    - '*curl *'
+    - '*tee -a*'
+    - '*/tmp/*'
+    - '*/bin/sh *'
+    - '*/bin/bash *'
+    - '*python -m http.server*'
+    - '*python3 -m http.server*'
+    - '*cp /bin/ksh*'
+    - '*cp /bin/sh*'
+    - '*cp /bin/bash*'
+    - '*tail -f /etc/passwd*'
+    - '*nc -lvp*'
+    - '*ncat -lvp*'
+    - '*openssl enc*'
+    - '*base64 -d*'
+  condition: keywords
+falsepositives:
+  - Unlikely
+level: high

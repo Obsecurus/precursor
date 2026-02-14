@@ -1,0 +1,5 @@
+(?<http_method>\bGET\b)
+(?<urlencoded_jndi>%24%7B|%7Bjndi)
+(?<ldap_scheme>ldap://|%3A1389)
+(?<exploit_class_path>/Exploit[[:alnum:]]+\.class)
+(?<java_user_agent>Java/[0-9._]+)

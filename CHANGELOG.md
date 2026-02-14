@@ -1,3 +1,47 @@
+0.2.1 - 2026-02-14
+===================
+
+## Added
+- Raw-binary ingestion mode:
+  - `-B, --input-binary`
+  - `--input-mode binary`
+- Sigma keyword rule ingest:
+  - `--sigma-rule <PATH>`
+  - converts Sigma detection selectors into named-capture PCRE patterns.
+  - applies Sigma `condition` expressions before emitting records.
+- Regex-engine scaffold:
+  - `--regex-engine pcre2|vectorscan`
+  - `vectorscan` mode emits compatibility diagnostics and uses the current PCRE2 execution path.
+- Public corpus scenarios:
+  - Log4Shell PCAP-derived probe triage
+  - fox-it Log4Shell PCAP replay triage
+  - public binwalk firmware-blob triage
+  - Sigma Linux shell suspicious-command triage
+  - public Zeek DNS log triage
+- FBHash backend implementation:
+  - `--similarity-mode fbhash`
+  - in-tree FBHash-inspired chunk-vector hash + pairwise diff path
+- Strategy docs:
+  - `SIGMA_INTEGRATION.md`
+  - `HARDWARE_ACCELERATION.md`
+  - `SIMILARITY_BACKENDS.md`
+  - `STATS.md`
+
+## Changed
+- Blob-mode decoding for `base64` and `hex` now operates directly on bytes (no UTF-8 wrapper prerequisite).
+- Scenario runner and GitHub Pages demo now include binary mode, Sigma ingest, and public corpus workflows.
+- README and roadmap were updated for release-readiness and feature clarity.
+
+## Fixed
+- Added regression coverage for binary blob ingestion from stdin and input folders.
+- Added regression coverage for `--stats` schema and backend-mode reporting.
+- Added contract test for deterministic PCAP replay extraction script output.
+
+## Known limitations
+- Sigma ingest currently targets the `detection` selector space and does not yet implement full Sigma pipeline/backend transforms.
+- FBHash currently uses an in-tree stream-friendly approximation and does not yet run a separate corpus-wide IDF indexing stage.
+- MRSHv2 depends on a native adapter library when `similarity-mrshv2` is enabled.
+
 0.2.0 - 2026-02-13
 ===================
 
@@ -45,6 +89,5 @@
 - Replaced panic-prone file ingestion `expect(...)` paths with recoverable error handling.
 
 ## Known limitations
-- Blob mode supports raw bytes in `string` mode, and UTF-8 encoded `base64`/`hex` wrappers for encoded modes.
-- FBHash backend mode remains scaffolded.
+- FBHash backend was scaffolded in 0.2.0 and implemented in 0.2.1.
 - MRSHv2 depends on a native adapter library when `similarity-mrshv2` is enabled.

@@ -1,0 +1,5 @@
+(?<http_method>^(GET|POST|HEAD|PUT|DELETE) )
+(?<jndi_expression>\$\{.*j.*n.*d.*i.*\})
+(?<ldap_uri>ldap://)
+(?<obfuscation_primitive>(lower:|upper:|::-|env:DOESNOTEXIST))
+(?<exploit_probe>(\$\{|\}))
