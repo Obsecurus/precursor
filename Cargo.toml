@@ -1,7 +1,7 @@
 [package]
 name = "precursor"
 build = "build.rs"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 rust-version = "1.86"
 authors = ["Matt Lehman <obsecurus@users.noreply.github.com>"]
@@ -12,7 +12,7 @@ description = "Pre-protocol payload tagging, similarity clustering, and packet/f
 readme = "README.md"
 keywords = ["ids", "forensics", "similarity", "packet", "firmware"]
 license = "MIT OR Unlicense"
-categories = ["command-line-utilities", "filesystem", "datascience"]
+categories = ["command-line-utilities", "filesystem", "science"]
 exclude = [
   ".env",
   ".env.*",

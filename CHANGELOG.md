@@ -1,3 +1,13 @@
+0.2.3 - 2026-02-14
+===================
+
+## Fixed
+- Cargo publish pipeline now succeeds on crates.io category validation:
+  - replaced unsupported category slug `datascience` with `science` in `Cargo.toml`.
+- Release reruns for the same tag are now safe:
+  - `gh release upload` now uses clobber mode in both archive upload jobs.
+- `publish-crates` crates.io API checks now include required request headers to avoid 403 responses.
+
 0.2.2 - 2026-02-14
 ===================
 
