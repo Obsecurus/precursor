@@ -117,6 +117,13 @@ fn single_packet_emits_protocol_fields() {
 }
 
 #[test]
+fn version_flag_emits_package_version() {
+    let output = run_precursor(&["--version"], "");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains(env!("CARGO_PKG_VERSION")));
+}
+
+#[test]
 fn protocol_hints_include_inference_context() {
     let line_one =
         "GET /one HTTP/1.1 Host: example.org User-Agent: precursor-long-test-agent-aaaaaaaaaa";

@@ -135,6 +135,7 @@ fn main() {
 
     // Create a clap::ArgMatches object to store the CLI arguments
     let cmd = Command::new("precursor")
+    .version(env!("CARGO_PKG_VERSION"))
     .about("Precursor is a PCRE2 payload tagging and similarity hashing CLI (TLSH/LZJD) for text, binary, hex, or base64 input.")
     .color(ColorChoice::Auto)
     .long_about("Precursor currently supports the following TLSH algorithms:\n
