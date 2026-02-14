@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   tag:
@@ -20,6 +21,8 @@ jobs:
           fetch-depth: 0
 
       - name: Create release tag from Cargo.toml version bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -56,3 +59,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$curr_version" -m "$curr_version"
           git push origin "$curr_version"
+          gh workflow run release.yml --ref main -f version="$curr_version"

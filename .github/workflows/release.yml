@@ -5,6 +5,12 @@ on:
   push:
     tags:
       - "[0-9]*.[0-9]*.[0-9]*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (x.y.z tag name)"
+        required: true
+        type: string
 
 # We need this to be able to create releases.
 permissions:
@@ -19,11 +25,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version || github.ref_name }}
       - name: Get the release version from the tag
         id: release_version
         shell: bash
         run: |
-          version="${{ github.ref_name }}"
+          requested="${{ inputs.version }}"
+          if [ -n "$requested" ]; then
+            version="$requested"
+          else
+            version="${{ github.ref_name }}"
+          fi
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "version=$version" >> $GITHUB_OUTPUT
       - name: Show the version
@@ -50,6 +63,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.version }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -156,6 +171,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.version }}
 
       - name: Install packages (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
@@ -288,6 +305,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.version }}
 
       - name: Install packages (Ubuntu)
         shell: bash
@@ -329,3 +348,61 @@ jobs:
           cd "$DEB_DIR"
           version="${{ needs.create-release.outputs.version }}"
           gh release upload "$version" "$DEB_NAME" "$SUM"
+
+  publish-crates:
+    name: publish-crates
+    needs: ["create-release", "build-release", "build-release-deb"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create-release.outputs.version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Check whether version is already on crates.io
+        id: crates_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.create-release.outputs.version }}"
+          status="$(curl -sS -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/precursor/$version")"
+          if [ "$status" = "200" ]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "precursor $version is already published on crates.io; skipping cargo publish."
+          elif [ "$status" = "404" ]; then
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+            echo "precursor $version is not yet published on crates.io; proceeding."
+          else
+            echo "Unexpected crates.io status code: $status" >&2
+            exit 1
+          fi
+
+      - name: Publish to crates.io
+        if: steps.crates_check.outputs.already_published != 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo publish --locked
+
+      - name: Verify crates.io publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.create-release.outputs.version }}"
+          for attempt in $(seq 1 18); do
+            status="$(curl -sS -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/precursor/$version")"
+            if [ "$status" = "200" ]; then
+              echo "Confirmed precursor $version on crates.io."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for precursor $version to appear on crates.io." >&2
+          exit 1
