@@ -4,6 +4,7 @@
 ## Fixed
 - Cargo publish pipeline now succeeds on crates.io category validation:
   - replaced unsupported category slug `datascience` with `science` in `Cargo.toml`.
+- Cargo publish workflow now uses crates.io Trusted Publishing (OIDC) in `release.yml`.
 - Release reruns for the same tag are now safe:
   - `gh release upload` now uses clobber mode in both archive upload jobs.
 - `publish-crates` crates.io API checks now include required request headers to avoid 403 responses.

@@ -353,6 +353,10 @@ jobs:
     name: publish-crates
     needs: ["create-release", "build-release", "build-release-deb"]
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -385,10 +389,15 @@ jobs:
             exit 1
           fi
 
+      - name: Authenticate to crates.io via trusted publishing
+        if: steps.crates_check.outputs.already_published != 'true'
+        id: crates_auth
+        uses: rust-lang/crates-io-auth-action@v1
+
       - name: Publish to crates.io
         if: steps.crates_check.outputs.already_published != 'true'
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates_auth.outputs.token }}
         shell: bash
         run: |
           set -euo pipefail
