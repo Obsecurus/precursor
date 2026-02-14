@@ -1,3 +1,4 @@
+use crate::precursor::fbhash::{calculate_fbhash, FbHash};
 use crate::precursor::lzjd::{calculate_lzjd_hash, LzjdHash};
 use crate::precursor::mrshv2::{calculate_mrshv2_hash, diff_mrshv2_hash, Mrshv2Hash};
 use crate::precursor::tlsh::{calculate_tlsh_hash, TlshHashInstance};
@@ -40,6 +41,7 @@ pub enum SimilarityHash {
     Tlsh(TlshHashInstance),
     Lzjd(LzjdHash),
     Mrshv2(Mrshv2Hash),
+    FbHash(FbHash),
 }
 
 impl SimilarityHash {
@@ -49,6 +51,7 @@ impl SimilarityHash {
                 .map_err(|err| SimilarityError::new(format!("Invalid TLSH hash UTF-8: {}", err))),
             SimilarityHash::Lzjd(hash) => Ok(hash.as_string()),
             SimilarityHash::Mrshv2(hash) => Ok(hash.as_string().to_string()),
+            SimilarityHash::FbHash(hash) => Ok(hash.as_string().to_string()),
         }
     }
 }
@@ -87,9 +90,9 @@ pub fn calculate_similarity_hash(
         SimilarityMode::Mrshv2 => calculate_mrshv2_hash(payload)
             .map(SimilarityHash::Mrshv2)
             .map_err(SimilarityError::new),
-        SimilarityMode::FbHash => Err(SimilarityError::new(
-            "FBHash similarity mode is scaffolded but not implemented yet".to_string(),
-        )),
+        SimilarityMode::FbHash => calculate_fbhash(payload)
+            .map(SimilarityHash::FbHash)
+            .map_err(SimilarityError::new),
     }
 }
 
@@ -110,6 +113,9 @@ pub fn diff_similarity_hash(
         (SimilarityHash::Mrshv2(left_hash), SimilarityHash::Mrshv2(right_hash)) => {
             diff_mrshv2_hash(left_hash, right_hash, include_file_length)
                 .map_err(SimilarityError::new)
+        }
+        (SimilarityHash::FbHash(left_hash), SimilarityHash::FbHash(right_hash)) => {
+            Ok(left_hash.diff(right_hash, include_file_length))
         }
         _ => Err(SimilarityError::new(
             "Incompatible similarity hash algorithm types".to_string(),
@@ -146,5 +152,12 @@ mod tests {
         let mode = SimilarityMode::from_str("mrshv2").expect("expected mode");
         assert_eq!(mode, SimilarityMode::Mrshv2);
         assert_eq!(mode.as_str(), "mrshv2");
+    }
+
+    #[test]
+    fn test_similarity_mode_fbhash_roundtrip() {
+        let mode = SimilarityMode::from_str("fbhash").expect("expected mode");
+        assert_eq!(mode, SimilarityMode::FbHash);
+        assert_eq!(mode.as_str(), "fbhash");
     }
 }

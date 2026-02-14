@@ -18,6 +18,8 @@ extern crate serde_json;
 extern crate xxhash_rust;
 
 use crate::precursor::inference::infer_protocol_candidates;
+use crate::precursor::regex_engine::{vectorscan_compatibility_issues, RegexEngine};
+use crate::precursor::sigma::{load_sigma_rule_plan, matching_sigma_rules, SigmaRulePlan};
 use crate::precursor::similarity::*;
 use crate::precursor::util::*;
 
@@ -41,12 +43,18 @@ const TLSH_DISTANCE: &str = "tlsh-distance";
 const TLSH_SIM_ONLY: &str = "tlsh-sim-only";
 const INPUT_FOLDER: &str = "input-folder";
 const INPUT_MODE: &str = "input-mode";
+const INPUT_BINARY: &str = "input-binary";
 const INPUT_BLOB: &str = "input-blob";
 const INPUT_MODE_BASE64: &str = "base64";
 const INPUT_MODE_STRING: &str = "string";
 const INPUT_MODE_HEX: &str = "hex";
+const INPUT_MODE_BINARY: &str = "binary";
 const INPUT_JSON_KEY: &str = "input-json-key";
 const PATTERN_FILE: &str = "pattern-file";
+const SIGMA_RULE: &str = "sigma-rule";
+const REGEX_ENGINE: &str = "regex-engine";
+const REGEX_ENGINE_PCRE2: &str = "pcre2";
+const REGEX_ENGINE_VECTORSCAN: &str = "vectorscan";
 const PATTERN: &str = "pattern";
 const SIMILARITY_MODE: &str = "similarity-mode";
 const SIMILARITY_MODE_TLSH: &str = "tlsh";
@@ -58,6 +66,42 @@ const PROTOCOL_HINTS_LIMIT: &str = "protocol-hints-limit";
 const SINGLE_PACKET: &str = "single-packet";
 const ABSTAIN_THRESHOLD: &str = "abstain-threshold";
 const PROTOCOL_TOP_K: &str = "protocol-top-k";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PatternOrigin {
+    Standard,
+    Sigma,
+}
+
+#[derive(Debug)]
+struct CompiledPattern {
+    regex: pcre2::bytes::Regex,
+    origin: PatternOrigin,
+}
+
+fn compact_pattern(pattern: &str) -> String {
+    let compacted = pattern.replace('\n', "\\n");
+    let mut chars = compacted.chars();
+    let preview: String = chars.by_ref().take(120).collect();
+    if chars.next().is_some() {
+        format!("{}...", preview)
+    } else {
+        preview
+    }
+}
+
+fn resolved_input_mode<'a>(args: &'a ArgMatches) -> &'a str {
+    if args.get_flag(INPUT_BINARY) {
+        INPUT_MODE_BINARY
+    } else {
+        args.get_one::<String>(INPUT_MODE)
+            .map_or(INPUT_MODE_BASE64, String::as_str)
+    }
+}
+
+fn blob_mode_enabled(args: &ArgMatches, input_mode: &str) -> bool {
+    args.get_flag(INPUT_BLOB) || input_mode == INPUT_MODE_BINARY
+}
 
 fn main() {
     // Start execution timer
@@ -84,14 +128,14 @@ fn main() {
     // Create map store to store tlsh_reports by tlsh
     let tlsh_reports: DashMap<String, Value> = DashMap::new();
     let similarity_mode_help = if cfg!(feature = "similarity-mrshv2") {
-        "Select the similarity backend. TLSH/LZJD/MRSHv2 are implemented; FBHash is scaffolded."
+        "Select the similarity backend. TLSH, LZJD, FBHash, and MRSHv2 (feature-gated) are implemented."
     } else {
-        "Select the similarity backend. TLSH and LZJD are implemented; MRSHv2/FBHash are scaffolded."
+        "Select the similarity backend. TLSH, LZJD, and FBHash are implemented; MRSHv2 requires an optional feature."
     };
 
     // Create a clap::ArgMatches object to store the CLI arguments
     let cmd = Command::new("precursor")
-    .about("Precursor is a PCRE2 payload tagging and similarity hashing CLI (TLSH/LZJD) for text, hex, or base64 input.")
+    .about("Precursor is a PCRE2 payload tagging and similarity hashing CLI (TLSH/LZJD) for text, binary, hex, or base64 input.")
     .color(ColorChoice::Auto)
     .long_about("Precursor currently supports the following TLSH algorithms:\n
                   1. Tlsh48_1\n
@@ -100,11 +144,11 @@ fn main() {
                   4. Tlsh256_1\n
                   5. Tlsh256_3\n
                   6. LZJD-style sketching (`--similarity-mode lzjd`)\n
+                  7. FBHash-inspired chunk vector sketching (`--similarity-mode fbhash`)\n
                   \n
                   The -d flag performs pairwise distance calculations between every line of input provided. This is an expensive O(2^n) operation and can consume significant amounts of memory. You can optimize this by using appropriate PCRE2 pre-filters and choosing a smaller TLSH algorithm/sketch.")
     .arg(Arg::new(PATTERN)
         .help("Specify the PCRE2 pattern to be used, it must contain a single named capture group.")
-        .required_unless_present(PATTERN_FILE)
         .index(1))
     .arg(Arg::new(INPUT_FOLDER)
         .short('f')
@@ -117,13 +161,22 @@ fn main() {
         .long(INPUT_BLOB)
         .help("Process each input source as a single blob instead of splitting on newlines.")
         .action(ArgAction::SetTrue))
+    .arg(Arg::new(INPUT_BINARY)
+        .short('B')
+        .long(INPUT_BINARY)
+        .help("Treat each input source as raw binary bytes (implies blob processing semantics).")
+        .action(ArgAction::SetTrue))
     .arg(Arg::new(PATTERN_FILE)
         .short('p')
         .long(PATTERN_FILE)
         .value_parser(PathBufValueParser::new())
         .help("Specify the path to the file containing PCRE2 patterns, one per line, each must contain a single named capture group.")
-        .conflicts_with(PATTERN)
         .action(ArgAction::Set))
+    .arg(Arg::new(SIGMA_RULE)
+        .long(SIGMA_RULE)
+        .value_parser(PathBufValueParser::new())
+        .help("Load Sigma rule YAML, convert detection selectors into named PCRE2 patterns, and apply Sigma `condition` logic.")
+        .action(ArgAction::Append))
     .arg(Arg::new(TLSH)
         .short('t')
         .long(TLSH)
@@ -169,6 +222,12 @@ fn main() {
         ])
         .action(ArgAction::Set)
         .default_value(SIMILARITY_MODE_TLSH))
+    .arg(Arg::new(REGEX_ENGINE)
+        .long(REGEX_ENGINE)
+        .help("Regex execution engine. `vectorscan` currently runs compatibility checks and falls back to PCRE2 in this build.")
+        .value_parser([REGEX_ENGINE_PCRE2, REGEX_ENGINE_VECTORSCAN])
+        .action(ArgAction::Set)
+        .default_value(REGEX_ENGINE_PCRE2))
     .arg(Arg::new(PROTOCOL_HINTS)
         .long(PROTOCOL_HINTS)
         .help("Emit protocol-discovery hint JSON to STDERR for LLM-guided analysis loops.")
@@ -201,8 +260,13 @@ fn main() {
     .arg(Arg::new(INPUT_MODE)
         .short('m')
         .long(INPUT_MODE)
-        .help("Specify the payload mode as base64, string, or hex for stdin.")
-        .value_parser([INPUT_MODE_BASE64, INPUT_MODE_STRING, INPUT_MODE_HEX])
+        .help("Specify the payload mode as base64, string, hex, or binary.")
+        .value_parser([
+            INPUT_MODE_BASE64,
+            INPUT_MODE_STRING,
+            INPUT_MODE_HEX,
+            INPUT_MODE_BINARY,
+        ])
         .action(ArgAction::Set)
         .default_value("base64"))
     .arg(Arg::new(INPUT_JSON_KEY)
@@ -227,22 +291,21 @@ fn main() {
             std::process::exit(2);
         }
     };
+    let regex_engine_value = args
+        .get_one::<String>(REGEX_ENGINE)
+        .map_or(REGEX_ENGINE_PCRE2, String::as_str);
+    let regex_engine = match RegexEngine::from_str(regex_engine_value) {
+        Ok(engine) => engine,
+        Err(err) => {
+            eprintln!("Unable to parse regex engine: {}", err);
+            std::process::exit(2);
+        }
+    };
 
     let similarity_requested =
         args.get_flag(TLSH) || args.get_flag(TLSH_DIFF) || args.get_flag(TLSH_LENGTH);
     if similarity_requested {
         let mrshv2_enabled = cfg!(feature = "similarity-mrshv2");
-        if similarity_mode == SimilarityMode::FbHash {
-            eprintln!(
-                "Similarity mode '{}' is scaffolded but not implemented yet. Use --{} {} or --{} {} for active hashing.",
-                similarity_mode.as_str(),
-                SIMILARITY_MODE,
-                SIMILARITY_MODE_TLSH,
-                SIMILARITY_MODE,
-                SIMILARITY_MODE_LZJD
-            );
-            std::process::exit(2);
-        }
         if similarity_mode == SimilarityMode::Mrshv2 && !mrshv2_enabled {
             eprintln!(
                 "Similarity mode '{}' requires compiling with `--features similarity-mrshv2` and linking a native adapter. Use --{} {} or --{} {} for active hashing in this build.",
@@ -256,33 +319,91 @@ fn main() {
         }
     }
 
+    let input_mode = resolved_input_mode(&args);
+    if input_mode == INPUT_MODE_BINARY && args.get_one::<String>(INPUT_JSON_KEY).is_some() {
+        eprintln!(
+            "--{} cannot be combined with --{} because JSON extraction requires UTF-8 text input.",
+            INPUT_BINARY, INPUT_JSON_KEY
+        );
+        std::process::exit(2);
+    }
+    let blob_mode = blob_mode_enabled(&args, input_mode);
+
     let tlsh_list = Mutex::new(tlsh_list);
     let payload_reports = Mutex::new(payload_reports);
 
-    let patterns: Vec<String> =
-        if let Some(pattern_file) = args.get_one::<std::path::PathBuf>(PATTERN_FILE) {
-            match read_patterns(Some(pattern_file)) {
-                Ok(patterns) => patterns,
+    let mut sigma_rule_plans: Vec<SigmaRulePlan> = Vec::new();
+    let mut pattern_specs: Vec<(String, PatternOrigin)> = Vec::new();
+    if let Some(pattern_file) = args.get_one::<std::path::PathBuf>(PATTERN_FILE) {
+        match read_patterns(Some(pattern_file)) {
+            Ok(loaded_patterns) => {
+                for loaded_pattern in loaded_patterns {
+                    pattern_specs.push((loaded_pattern, PatternOrigin::Standard));
+                }
+            }
+            Err(err) => {
+                eprintln!(
+                    "Unable to read pattern file {}: {}",
+                    pattern_file.display(),
+                    err
+                );
+                std::process::exit(2);
+            }
+        }
+    }
+    if let Some(pattern) = args.get_one::<String>(PATTERN) {
+        pattern_specs.push((pattern.to_string(), PatternOrigin::Standard));
+    }
+    if let Some(sigma_rules) = args.get_many::<std::path::PathBuf>(SIGMA_RULE) {
+        for sigma_rule in sigma_rules {
+            match load_sigma_rule_plan(sigma_rule.as_path()) {
+                Ok(plan) => {
+                    for spec in &plan.pattern_specs {
+                        pattern_specs.push((spec.regex.to_string(), PatternOrigin::Sigma));
+                    }
+                    sigma_rule_plans.push(plan);
+                }
                 Err(err) => {
-                    eprintln!(
-                        "Unable to read pattern file {}: {}",
-                        pattern_file.display(),
-                        err
-                    );
+                    eprintln!("{}", err);
                     std::process::exit(2);
                 }
             }
-        } else if let Some(pattern) = args.get_one::<String>(PATTERN) {
-            vec![pattern.to_string()]
-        } else {
-            eprintln!("Either a positional pattern or --pattern-file must be provided.");
-            std::process::exit(2);
-        };
+        }
+    }
+    if pattern_specs.is_empty() {
+        eprintln!(
+            "At least one pattern source is required: positional PATTERN, --{}, or --{}.",
+            PATTERN_FILE, SIGMA_RULE
+        );
+        std::process::exit(2);
+    }
 
-    let mut compiled_patterns = Vec::with_capacity(patterns.len());
-    for pattern in &patterns {
+    if regex_engine == RegexEngine::Vectorscan {
+        eprintln!(
+            "Regex engine '{}' is currently a compatibility scaffold; executing with '{}' runtime in this build.",
+            regex_engine.as_str(),
+            RegexEngine::Pcre2.as_str()
+        );
+    }
+
+    let mut compiled_patterns = Vec::with_capacity(pattern_specs.len());
+    for (pattern, origin) in &pattern_specs {
+        if regex_engine == RegexEngine::Vectorscan {
+            let issues = vectorscan_compatibility_issues(pattern);
+            if !issues.is_empty() {
+                eprintln!(
+                    "Pattern '{}' requires PCRE2 fallback semantics under '{}': {}",
+                    compact_pattern(pattern),
+                    regex_engine.as_str(),
+                    issues.join("; ")
+                );
+            }
+        }
         match build_regex(pattern) {
-            Ok(re) => compiled_patterns.push(re),
+            Ok(re) => compiled_patterns.push(CompiledPattern {
+                regex: re,
+                origin: *origin,
+            }),
             Err(err) => {
                 eprintln!("Invalid PCRE2 pattern '{}': {}", pattern, err);
                 std::process::exit(2);
@@ -317,7 +438,7 @@ fn main() {
                 continue;
             }
 
-            if args.get_flag(INPUT_BLOB) {
+            if blob_mode {
                 let blob = match std::fs::read(&file_path) {
                     Ok(blob) => blob,
                     Err(err) => {
@@ -329,7 +450,9 @@ fn main() {
                 handle_blob(
                     blob.as_slice(),
                     &compiled_patterns,
+                    &sigma_rule_plans,
                     &args,
+                    input_mode,
                     &similarity_mode,
                     &tlsh_list,
                     &payload_reports,
@@ -363,7 +486,9 @@ fn main() {
                 handle_line(
                     &line,
                     &compiled_patterns,
+                    &sigma_rule_plans,
                     &args,
+                    input_mode,
                     &similarity_mode,
                     &tlsh_list,
                     &payload_reports,
@@ -378,7 +503,7 @@ fn main() {
         }
     } else {
         let stdin = io::stdin();
-        if args.get_flag(INPUT_BLOB) {
+        if blob_mode {
             let mut blob = Vec::new();
             let mut lock = stdin.lock();
             if let Err(err) = lock.read_to_end(&mut blob) {
@@ -389,7 +514,9 @@ fn main() {
             handle_blob(
                 blob.as_slice(),
                 &compiled_patterns,
+                &sigma_rule_plans,
                 &args,
+                input_mode,
                 &similarity_mode,
                 &tlsh_list,
                 &payload_reports,
@@ -418,7 +545,9 @@ fn main() {
                     handle_line(
                         line,
                         &compiled_patterns,
+                        &sigma_rule_plans,
                         &args,
+                        input_mode,
                         &similarity_mode,
                         &tlsh_list,
                         &payload_reports,
@@ -603,9 +732,7 @@ fn main() {
                 0
             }
         };
-        let input_mode = args
-            .get_one::<String>(INPUT_MODE)
-            .map_or(INPUT_MODE_BASE64, String::as_str);
+        let input_mode = resolved_input_mode(&args);
         let hash_function = args
             .get_one::<String>(TLSH_ALGORITHM)
             .map_or("48_1", String::as_str);
@@ -616,7 +743,7 @@ fn main() {
 
         // Create a JSON object for the stats
         let stats = json!({
-            "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats seperate from the primary output.",
+            "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
             "Input": {
                         "Count": counter_inputs.get(),
                         "Unique": unique_payload_count,
@@ -641,6 +768,7 @@ fn main() {
                         "DurationSeconds": formated_duration,
                         "ProcessingRate": processing_rate,
                         "SimilarityMode": similarity_mode.as_str(),
+                        "RegexEngine": regex_engine.as_str(),
                         "InputMode": input_mode,
                         "HashFunction": hash_function,
                         "DistanceThreshold": distance_threshold,
@@ -651,6 +779,7 @@ fn main() {
                         "SinglePacketInference": args.get_flag(SINGLE_PACKET),
                         "AbstainThreshold": args.get_one::<f64>(ABSTAIN_THRESHOLD).copied().unwrap_or(0.65),
                         "ProtocolTopK": args.get_one::<usize>(PROTOCOL_TOP_K).copied().unwrap_or(3),
+                        "SigmaRulesLoaded": sigma_rule_plans.len(),
                         },
             }
         );
@@ -1039,7 +1168,8 @@ fn decode_payload_from_json_expression(
 fn process_decoded_payload(
     payload: Vec<u8>,
     mut json_clone: Value,
-    patterns: &[pcre2::bytes::Regex],
+    patterns: &[CompiledPattern],
+    sigma_rule_plans: &[SigmaRulePlan],
     args: &ArgMatches,
     similarity_mode: &SimilarityMode,
     tlsh_list: &Mutex<Vec<SimilarityHash>>,
@@ -1068,10 +1198,12 @@ fn process_decoded_payload(
 
     let mut matched_capture_groups: Vec<Value> = Vec::new();
     let mut matched_tag_names: Vec<String> = Vec::new();
-    let mut match_exists = false;
+    let mut standard_match_exists = false;
+    let mut sigma_pattern_match_exists = false;
 
-    for re in patterns.iter() {
-        let result = re
+    for compiled in patterns.iter() {
+        let result = compiled
+            .regex
             .captures_iter(payload.as_slice())
             .filter_map(|res| res.ok())
             .any(|caps| {
@@ -1082,7 +1214,7 @@ fn process_decoded_payload(
                 }
                 counter_pcre_matches_total.inc();
                 let mut found_match = false;
-                for name in re.capture_names() {
+                for name in compiled.regex.capture_names() {
                     if let Some(name) = name {
                         if caps.name(name).is_some() {
                             // Here we increment a counter for each of the capture group names from the PCRE2 patterns.
@@ -1099,9 +1231,18 @@ fn process_decoded_payload(
                 found_match
             });
         if result {
-            match_exists = true;
+            match compiled.origin {
+                PatternOrigin::Standard => standard_match_exists = true,
+                PatternOrigin::Sigma => sigma_pattern_match_exists = true,
+            }
         }
     }
+
+    let sigma_rule_matches = matching_sigma_rules(sigma_rule_plans, &matched_tag_names);
+    let sigma_condition_match_exists = !sigma_rule_matches.is_empty();
+    let match_exists = standard_match_exists
+        || sigma_condition_match_exists
+        || (sigma_rule_plans.is_empty() && sigma_pattern_match_exists);
 
     let mut json_tlsh_hash: Value = Value::String(String::new());
     let tlsh_algorithm = match args.get_one::<String>(TLSH_ALGORITHM) {
@@ -1154,6 +1295,20 @@ fn process_decoded_payload(
             json_clone["similarity_hash"] = json_tlsh_hash.clone();
         }
         json_clone["tags"] = Value::Array(matched_capture_groups);
+        if !sigma_rule_matches.is_empty() {
+            json_clone["sigma_rule_matches"] = Value::Array(
+                sigma_rule_matches
+                    .iter()
+                    .map(|rule| Value::String(rule.rule_name.to_string()))
+                    .collect(),
+            );
+            json_clone["sigma_rule_ids"] = Value::Array(
+                sigma_rule_matches
+                    .iter()
+                    .map(|rule| Value::String(rule.rule_slug.to_string()))
+                    .collect(),
+            );
+        }
         if args.get_flag(SINGLE_PACKET) {
             let abstain_threshold = args
                 .get_one::<f64>(ABSTAIN_THRESHOLD)
@@ -1200,8 +1355,10 @@ fn process_decoded_payload(
 
 fn handle_blob(
     blob: &[u8],
-    patterns: &[pcre2::bytes::Regex],
+    patterns: &[CompiledPattern],
+    sigma_rule_plans: &[SigmaRulePlan],
     args: &ArgMatches,
+    input_mode: &str,
     similarity_mode: &SimilarityMode,
     tlsh_list: &Mutex<Vec<SimilarityHash>>,
     payload_reports: &Mutex<Map<String, Value>>,
@@ -1212,10 +1369,6 @@ fn handle_blob(
     counter_unique_payloads: &Arc<Mutex<HashSet<u64>>>,
     counter_pcre_matches_total: &Arc<ConsistentCounter>,
 ) {
-    let input_mode = args
-        .get_one::<String>(INPUT_MODE)
-        .map_or(INPUT_MODE_BASE64, String::as_str);
-
     let (payload, json_clone) = if let Some(payload_key) = args.get_one::<String>(INPUT_JSON_KEY) {
         let blob_as_utf8 = match std::str::from_utf8(blob) {
             Ok(text) => text,
@@ -1235,36 +1388,13 @@ fn handle_blob(
             }
         }
     } else {
-        let payload = match input_mode {
-            INPUT_MODE_STRING => blob.to_vec(),
-            INPUT_MODE_BASE64 | INPUT_MODE_HEX => {
-                let blob_as_utf8 = match std::str::from_utf8(blob) {
-                    Ok(text) => text,
-                    Err(err) => {
-                        eprintln!(
-                            "Unable to decode blob using input mode {}: {}",
-                            input_mode, err
-                        );
-                        return;
-                    }
-                };
-                let normalized: String = blob_as_utf8
-                    .chars()
-                    .filter(|ch| !ch.is_whitespace())
-                    .collect();
-                match get_payload(&normalized, input_mode) {
-                    Ok(decoded) => decoded,
-                    Err(err) => {
-                        eprintln!(
-                            "Unable to decode blob using input mode {}: {}",
-                            input_mode, err
-                        );
-                        return;
-                    }
-                }
-            }
-            _ => {
-                eprintln!("{} not a supported input mode.", input_mode);
+        let payload = match get_payload_from_blob(blob, input_mode) {
+            Ok(decoded) => decoded,
+            Err(err) => {
+                eprintln!(
+                    "Unable to decode blob using input mode {}: {}",
+                    input_mode, err
+                );
                 return;
             }
         };
@@ -1275,6 +1405,7 @@ fn handle_blob(
         payload,
         json_clone,
         patterns,
+        sigma_rule_plans,
         args,
         similarity_mode,
         tlsh_list,
@@ -1290,8 +1421,10 @@ fn handle_blob(
 
 fn handle_line(
     line: &str,
-    patterns: &[pcre2::bytes::Regex],
+    patterns: &[CompiledPattern],
+    sigma_rule_plans: &[SigmaRulePlan],
     args: &ArgMatches,
+    input_mode: &str,
     similarity_mode: &SimilarityMode,
     tlsh_list: &Mutex<Vec<SimilarityHash>>,
     payload_reports: &Mutex<Map<String, Value>>,
@@ -1302,9 +1435,6 @@ fn handle_line(
     counter_unique_payloads: &Arc<Mutex<HashSet<u64>>>,
     counter_pcre_matches_total: &Arc<ConsistentCounter>,
 ) {
-    let input_mode = args
-        .get_one::<String>(INPUT_MODE)
-        .map_or(INPUT_MODE_BASE64, String::as_str);
     let (payload, json_clone) = if let Some(payload_key) = args.get_one::<String>(INPUT_JSON_KEY) {
         match decode_payload_from_json_expression(line, payload_key, input_mode) {
             Ok(decoded) => decoded,
@@ -1331,6 +1461,7 @@ fn handle_line(
         payload,
         json_clone,
         patterns,
+        sigma_rule_plans,
         args,
         similarity_mode,
         tlsh_list,

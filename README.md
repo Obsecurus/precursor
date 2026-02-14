@@ -5,23 +5,22 @@
 </p>
 
 `precursor` is a CLI for **pre-protocol payload tagging + similarity clustering**.
-It combines PCRE2 named-capture matching, TLSH/LZJD similarity, optional MRSHv2 adapter mode, and JSON outputs that are easy to feed into detection engineering and LLM-assisted protocol discovery loops.
+It combines PCRE2 named-capture matching, TLSH/LZJD/FBHash similarity, optional MRSHv2 adapter mode, and JSON outputs that are easy to feed into detection engineering and LLM-assisted protocol discovery loops.
 Project page: https://precursor.hashdb.io
 
-## Release 0.2.0 Highlights
+## Release 0.2.1 Highlights
 
 | Area | What landed |
 | --- | --- |
 | Packet Inference | Single-packet protocol scoring via `-P` / `-A` / `-k` |
-| Blob Processing | `-z, --input-blob` for multiline or stream-as-one-record analysis |
-| Similarity Workflows | TLSH or LZJD clustering + protocol hints (`--protocol-hints`) for discovery loops |
+| Blob + Binary Processing | `-z, --input-blob` and `-B, --input-binary` for multiline and raw-byte stream analysis |
+| Similarity Workflows | TLSH, LZJD, or FBHash clustering + protocol hints (`--protocol-hints`) for discovery loops |
+| Sigma Compatibility | `--sigma-rule` converts selectors into named PCRE captures and enforces Sigma `condition` logic |
+| Regex Engine Scaffold | `--regex-engine pcre2|vectorscan` with compatibility diagnostics and PCRE2 fallback path |
 | Output Contract | Stable `protocol_*`, `similarity_hash`, `tags`, `xxh3_64_sum` JSON fields |
 | Reliability | Runtime ingest path no longer relies on panic-prone `expect(...)` calls |
-| Scenario Corpus | Versioned packet/firmware/ICS samples in `samples/scenarios/` |
+| Scenario Corpus | Versioned packet/firmware/ICS + public PCAP/log/Sigma-derived samples in `samples/scenarios/` |
 | Release Ops | Dependency auto-bump/tag workflows + benchmark harness + Pages site |
-
-> [!IMPORTANT]
-> **Known limitation:** in blob mode (`-z`), raw bytes are fully supported in `string` mode, while `base64` and `hex` blob decoding currently expects UTF-8 wrapper text.
 
 ## 60-second teaser
 
@@ -62,7 +61,7 @@ Why this matters:
 
 - Not a replacement for full IDS/NSM stacks (Suricata, Zeek).
 - Not a malware rule engine replacement (YARA / YARA-X).
-- Not yet a full raw-binary parser framework; blob mode currently expects UTF-8 wrappers for `base64`/`hex` decode modes.
+- Not a full protocol parser stack; this is pre-protocol triage and clustering.
 
 ## Architecture
 
@@ -141,25 +140,70 @@ cat payloads.raw \
   | precursor -p patterns/new -m string -t -d --similarity-mode lzjd -x 80
 ```
 
-### 7) Emit protocol-discovery hints for an LLM loop
+### 7) Switch to FBHash similarity mode
+
+```bash
+cat payloads.raw \
+  | precursor -p patterns/new -m string -t -d --similarity-mode fbhash -x 90
+```
+
+### 8) Emit protocol-discovery hints for an LLM loop
 
 ```bash
 cat payloads.b64 \
   | precursor -p patterns/new -m base64 -t -d --protocol-hints --protocol-hints-limit 20
 ```
 
-### 8) Enable single-packet protocol inference output
+### 9) Enable single-packet protocol inference output
 
 ```bash
 cat payloads.b64 \
   | precursor -p patterns/new -m base64 -P -A 0.7 -k 5
 ```
 
-### 9) Match a multiline payload as one blob
+### 10) Match a multiline payload as one blob
 
 ```bash
 printf 'GET /blob HTTP/1.1\nHost: blob.example\n' \
   | precursor '(?<multi>GET /blob HTTP/1\.1\nHost: blob\.example)' -m string -z
+```
+
+### 11) Match a raw-binary blob (short flag)
+
+```bash
+printf '\x7fELF\x02\x01\x01\x00' \
+  | precursor '(?<elf_magic>^\x7fELF)' -B
+```
+
+### 12) Load Sigma rules with condition gating
+
+```bash
+cat samples/scenarios/sigma-linux-shell-command-triage/payloads.log \
+  | precursor --sigma-rule samples/scenarios/sigma-linux-shell-command-triage/sigma_rule.yml \
+      -m string -t -d --similarity-mode lzjd
+```
+
+### 13) Run vectorscan compatibility mode (PCRE2 fallback)
+
+```bash
+cat payloads.raw \
+  | precursor '(?<http_get>GET)' -m string --regex-engine vectorscan
+```
+
+### 14) Replay a real public Log4Shell PCAP (FBHash mode)
+
+```bash
+cat samples/scenarios/public-log4shell-foxit-pcap/payloads.string \
+  | precursor -p samples/scenarios/public-log4shell-foxit-pcap/patterns.pcre \
+      -m string -t -d --similarity-mode fbhash -P --protocol-hints
+```
+
+### 15) Triage public firmware blobs in binary folder mode
+
+```bash
+precursor -p samples/scenarios/public-firmware-binwalk-magic/patterns.pcre \
+  -f samples/scenarios/public-firmware-binwalk-magic/blobs \
+  --input-mode binary -t -d --similarity-mode lzjd -P --protocol-hints
 ```
 
 ## CLI reference
@@ -168,15 +212,19 @@ printf 'GET /blob HTTP/1.1\nHost: blob.example\n' \
 precursor [PATTERN] [OPTIONS]
 ```
 
+At least one pattern source is required: positional `PATTERN`, `--pattern-file`, or `--sigma-rule`.
+
 Pattern source:
 - positional `PATTERN` (single named-capture regex)
 - `-p, --pattern-file <PATH>` (one named-capture pattern per line)
+- `--sigma-rule <PATH>` (Sigma YAML selectors converted to named-capture PCRE patterns with `condition` enforcement)
 
 Input:
 - `-f, --input-folder <PATH>`: read newline-delimited content from files
 - stdin: read newline-delimited input from standard input
 - `-z, --input-blob`: process each input source as one blob instead of line splitting
-- `-m, --input-mode <base64|string|hex>`: decode mode (default: `base64`)
+- `-B, --input-binary`: treat each source as raw binary bytes (implies blob processing semantics)
+- `-m, --input-mode <base64|string|hex|binary>`: decode mode (default: `base64`)
 - `-j, --input-json-key <QUERY>`: extract payload from JSON input first
 
 Similarity:
@@ -187,14 +235,15 @@ Similarity:
 - `-l, --tlsh-length`: include payload length in diff scoring
 - `-y, --tlsh-sim-only`: only output payloads that have TLSH similarities
 - `--similarity-mode <tlsh|lzjd|mrshv2|fbhash>`:
-  - `tlsh` and `lzjd` are implemented in default builds
+  - `tlsh`, `lzjd`, and `fbhash` are implemented in default builds
   - `mrshv2` is implemented behind `--features similarity-mrshv2` and native adapter linking
-  - `fbhash` remains scaffolded
+  - `fbhash` currently uses an in-tree FBHash-inspired chunk-vector model for stream-friendly pairwise scoring
 - `--protocol-hints`: emit LLM-oriented protocol-discovery hint JSON to `stderr`
 - `--protocol-hints-limit <N>`: limit hint candidate count (default: `25`)
 - `-P, --single-packet`: enable heuristic protocol inference on each matched payload
 - `-A, --abstain-threshold <0.0-1.0>`: minimum confidence required to emit a non-`unknown` label (default: `0.65`)
 - `-k, --protocol-top-k <N>`: candidate count included in `protocol_candidates` (default: `3`)
+- `--regex-engine <pcre2|vectorscan>`: regex engine selection (`vectorscan` mode emits compatibility checks and executes through current PCRE2 path)
 
 Other:
 - `-s, --stats`: emit run statistics JSON to `stderr`
@@ -211,23 +260,44 @@ Each matched payload is emitted as JSON on `stdout` with fields such as:
 - `protocol_confidence`: confidence score for `protocol_label`
 - `protocol_abstained`: whether inference abstained under threshold
 - `protocol_candidates`: scored candidate list with evidence strings
+- `sigma_rule_matches`: Sigma rule titles whose `condition` evaluated true (when `--sigma-rule` is used)
+- `sigma_rule_ids`: stable Sigma rule IDs/slugs that evaluated true
 
 When `--stats` is enabled, a summary JSON object is emitted to `stderr`.
+See `STATS.md` for schema, field meanings, and `jq` examples.
 When `--protocol-hints` is enabled, an additional hint JSON block is emitted to `stderr` for LLM-guided protocol discovery workflows, including `protocol_*` fields when single-packet inference is enabled.
 When both `--single-packet` and `--tlsh-diff` are enabled, protocol confidence is cluster-boosted using similarity neighbor counts.
-When `--input-blob` is enabled, each file/stdin stream is treated as a single candidate payload.
+When `--input-blob` is enabled (or `--input-binary` is set), each file/stdin stream is treated as a single candidate payload.
+
+### Stats quick view
+
+```bash
+cat payloads.b64 \
+  | precursor -p patterns/new -m base64 -t -d --similarity-mode lzjd --stats \
+  1>/tmp/records.ndjson 2>/tmp/stats.json
+
+jq '.Environment + {input_count: .Input.Count, similarities: .Compare.Similarities}' /tmp/stats.json
+```
+
+Notes:
+- `Compare` may be empty when too few matched payloads produce pairwise distances.
+- Historical record field names like `tlsh_similarities` are preserved for compatibility across TLSH/LZJD/FBHash modes.
 
 ## Positioning vs adjacent tools
 
 - Use **Suricata/Zeek** for full protocol-aware IDS/NSM and rich ecosystem integrations.
 - Use **YARA/YARA-X** for signature-based scanning of files and malware-centric workflows.
-- Use **Precursor** when you need lightweight, custom payload tagging plus TLSH/LZJD similarity in one CLI pipeline.
+- Use **Sigma** for backend-agnostic detection content and SIEM portability.
+- Use **Precursor** when you need lightweight payload tagging + similarity clustering, or when you want to run Sigma keyword intent directly against raw payload streams via `--sigma-rule`.
 
 ## Scenario corpus and demos
 
 - Scenario corpus: `samples/scenarios/`
 - Demo runner: `samples/scenarios/run_all.sh`
 - Static demo site source: `site/`
+- Includes packet/firmware/ICS plus public PCAP-derived Log4Shell probes, real fox-it Log4Shell PCAP replay, Sigma shell-command triage, Zeek DNS log triage, and real binwalk firmware blob samples.
+- Site includes mini replay reels that visually walk through PCAP replay, firmware blob triage, and Sigma labeling behavior.
+- `tshark` is only required when regenerating PCAP-derived payload extracts.
 
 ```bash
 samples/scenarios/run_all.sh ./target/release/precursor
@@ -259,6 +329,9 @@ Committed baseline:
 
 See `ROADMAP.md` for prioritized milestones and release criteria.
 See `SIMILARITY_BACKENDS.md` for MRSHv2/FBHash feasibility and backend sequencing.
+See `SIGMA_INTEGRATION.md` for Sigma feature coverage and next steps.
+See `HARDWARE_ACCELERATION.md` for regex acceleration/offload strategy.
+See `STATS.md` for run-statistics schema and usage guidance.
 
 ## Development
 

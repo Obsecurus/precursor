@@ -1,0 +1,4 @@
+(?<gzip_magic>^\x1f\x8b)
+(?<romfs_magic>^-rom1fs-)
+(?<squashfs_magic>^hsqs)
+(?<cramfs_magic>^\x45\x3d\xcd\x28)

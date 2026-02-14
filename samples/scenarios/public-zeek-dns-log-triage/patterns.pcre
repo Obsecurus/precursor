@@ -1,0 +1,3 @@
+(?<domain_like>^[a-z0-9][a-z0-9.-]{3,}$)
+(?<possible_c2_domain>(pastebin|yourtrap|cnc|botnet|loader))
+(?<suspicious_tld>\.(top|xyz|ru|tk)$)
