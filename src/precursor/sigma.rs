@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use xxhash_rust::xxh3::xxh3_64;
 
 #[derive(Clone, Debug)]
 pub struct SigmaPatternSpec {
@@ -309,7 +310,7 @@ fn add_sigma_patterns(
             sanitize_capture_name(selector_name)
         };
         let entry = capture_index.entry(stem.clone()).or_insert(0);
-        let capture_name = format!("sigma_{}_{}_{}", rule_slug, stem, *entry);
+        let capture_name = sigma_capture_name(rule_slug.as_str(), stem.as_str(), *entry);
         *entry += 1;
         let rendered = sigma_value_to_pcre(value.as_str(), modifiers);
         let regex = format!("(?<{}>{})", capture_name, rendered);
@@ -361,6 +362,18 @@ fn sanitize_capture_name(input: &str) -> String {
     } else {
         out
     }
+}
+
+fn sigma_capture_name(rule_slug: &str, stem: &str, ordinal: usize) -> String {
+    // Some PCRE2 builds enforce 32 code units for named captures (notably on Windows).
+    // Use a deterministic compact name so Sigma-generated patterns are portable.
+    const PCRE2_CAPTURE_NAME_MAX: usize = 32;
+    let digest = xxh3_64(format!("{}:{}:{}", rule_slug, stem, ordinal).as_bytes());
+    let mut name = format!("sigma_{:016x}_{}", digest, ordinal);
+    if name.len() > PCRE2_CAPTURE_NAME_MAX {
+        name = format!("sigma_{:016x}", digest);
+    }
+    name
 }
 
 fn sigma_escape_literal(input: &str) -> String {
@@ -696,8 +709,20 @@ detection:
             .values()
             .flat_map(|captures| captures.iter().cloned())
             .collect::<Vec<String>>();
+        assert!(matched.iter().all(|capture_name| capture_name.len() <= 32));
         let plans = [plan];
         let hits = matching_sigma_rules(&plans, &matched);
         assert_eq!(hits.len(), 1);
+    }
+
+    #[test]
+    fn sigma_capture_name_respects_portable_pcre2_limit() {
+        let capture_name = sigma_capture_name(
+            "sigma_condition_filter_test",
+            "selection_fetch_commandline",
+            123_456_789,
+        );
+        assert!(capture_name.starts_with("sigma_"));
+        assert!(capture_name.len() <= 32);
     }
 }
