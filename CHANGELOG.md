@@ -1,3 +1,26 @@
+0.2.2 - 2026-02-14
+===================
+
+## Added
+- New GitHub Pages demo UX:
+  - dark visual theme and improved stakeholder-facing narrative
+  - interactive scenario explorer with command/output/stats/insights tabs
+  - analyst refinement loop visualization driven by captured `--stats` snapshots
+  - codex-guided LLM demo with measured step-4 validation output
+- New site branding assets:
+  - `site/precursor-mark.svg`
+  - `site/favicon.svg`
+  - refreshed README/site logo in `assets/logo/precursor-logo.svg`
+- Demo data provenance docs:
+  - `site/data/README.md`
+
+## Changed
+- README header and project positioning now align with packet/log/binary pre-protocol triage workflows.
+- Pages content now links directly to scenario corpora and captured demo artifacts for reproducibility.
+
+## Notes
+- Local Claude CLI demo output is not bundled in this release snapshot because the local CLI auth state was unauthenticated during capture; runtime status is documented in `site/data/llm_claude_status.json`.
+
 0.2.1 - 2026-02-14
 ===================
 
