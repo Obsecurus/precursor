@@ -169,6 +169,10 @@ jobs:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
 
+      - name: Ensure target is installed
+        shell: bash
+        run: rustup target add ${{ matrix.target }}
+
       - name: Use Cross
         if: matrix.os == 'ubuntu-latest' && matrix.target != ''
         shell: bash
