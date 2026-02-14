@@ -1,52 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 900 220" role="img"
+  aria-labelledby="title desc">
   <title id="title">Precursor logo</title>
-  <desc id="desc">A radar-inspired emblem and wordmark for the Precursor project.</desc>
+  <desc id="desc">Precursor wordmark with packet similarity icon.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#081226"/>
-      <stop offset="100%" stop-color="#0e2d45"/>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2ac9ad" />
+      <stop offset="1" stop-color="#f68a42" />
     </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#32d8ff"/>
-      <stop offset="100%" stop-color="#73ffb8"/>
+    <linearGradient id="pulse" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6af8e6" />
+      <stop offset="1" stop-color="#ffc994" />
     </linearGradient>
-    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#58f0ff" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#58f0ff" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="2.4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
 
-  <rect x="0" y="0" width="1200" height="360" rx="26" fill="url(#bg)"/>
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="180" height="180" rx="38" fill="#08121f" stroke="url(#frame)" stroke-width="6" />
+    <path d="M24 52h56l16 20h59" fill="none" stroke="url(#pulse)" stroke-width="10" stroke-linecap="round"
+      stroke-linejoin="round" />
+    <path d="M24 96h40l16-20h34l18 20h23" fill="none" stroke="url(#pulse)" stroke-width="10" stroke-linecap="round"
+      stroke-linejoin="round" opacity="0.92" />
+    <path d="M24 138h50l13-14h68" fill="none" stroke="url(#pulse)" stroke-width="10" stroke-linecap="round"
+      stroke-linejoin="round" opacity="0.86" />
 
-  <g transform="translate(180 180)">
-    <circle cx="0" cy="0" r="108" fill="none" stroke="#1f4f69" stroke-width="2"/>
-    <circle cx="0" cy="0" r="82" fill="none" stroke="#1f4f69" stroke-width="2"/>
-    <circle cx="0" cy="0" r="56" fill="none" stroke="#1f4f69" stroke-width="2"/>
-    <path d="M0 0 L104 -36 A110 110 0 0 1 55 96 Z" fill="url(#beam)"/>
-    <circle cx="0" cy="0" r="108" fill="none" stroke="url(#ring)" stroke-width="4" filter="url(#softGlow)"/>
-    <circle cx="0" cy="0" r="82" fill="none" stroke="#2fbad8" stroke-width="3" opacity="0.65"/>
-    <circle cx="0" cy="0" r="56" fill="none" stroke="#5ceaa8" stroke-width="3" opacity="0.85"/>
-    <circle cx="36" cy="-58" r="6" fill="#79ffd2" filter="url(#softGlow)"/>
-    <circle cx="64" cy="24" r="5" fill="#4fdfff" filter="url(#softGlow)"/>
-
-    <path d="M-24 -74 H18 C52 -74 74 -54 74 -24 C74 4 55 25 24 29 H-24 Z" fill="none" stroke="#e7fbff" stroke-width="16" stroke-linejoin="round"/>
-    <path d="M-24 -74 H24 C38 -74 50 -64 50 -49 C50 -34 38 -22 23 -22 H-24 Z" fill="#0d2436"/>
-    <path d="M-24 -74 H26 C55 -74 75 -54 75 -24 C75 5 55 26 26 30 H-24" fill="none" stroke="#92fff0" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="24" cy="52" r="6" fill="#8ef7e8" />
+    <circle cx="154" cy="52" r="6" fill="#ffc38f" />
+    <circle cx="24" cy="96" r="6" fill="#8ef7e8" />
+    <circle cx="155" cy="96" r="6" fill="#ffc38f" />
+    <circle cx="24" cy="138" r="6" fill="#8ef7e8" />
+    <circle cx="155" cy="138" r="6" fill="#ffc38f" />
   </g>
 
-  <g transform="translate(338 150)">
-    <text x="0" y="50" fill="#f4fdff" font-family="'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="96" font-weight="700" letter-spacing="3">
-      PRECURSOR
-    </text>
-    <text x="2" y="97" fill="#74dff8" font-family="'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" letter-spacing="4">
-      PAYLOAD TAGGING AND SIMILARITY ANALYSIS
-    </text>
+  <g transform="translate(238,42)" font-family="Segoe UI, Trebuchet MS, Arial, sans-serif">
+    <text x="0" y="78" font-size="94" font-weight="700" fill="#0d1a2a">precursor</text>
+    <text x="4" y="130" font-size="28" fill="#3e556f">pre-protocol payload similarity triage</text>
   </g>
 </svg>

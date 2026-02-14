@@ -6,195 +6,261 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Precursor | Pre-Protocol Similarity Triage</title>
   <meta name="description"
-    content="Precursor turns raw payloads into protocol hints, similarity clusters, and fast triage output." />
+    content="Precursor turns raw packets, logs, and binary blobs into labels, similarity clusters, and analyst-ready triage output." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
     rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
   <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e26f679adf2e457baf5617c0fd4b466a"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 
 <body>
-  <div class="bg-layer"></div>
-  <main>
-    <header class="hero">
-      <p class="kicker">precursor.hashdb.io</p>
-      <h1>Pre-Protocol Payload Triage for Packets, Logs, and Firmware Fragments</h1>
-      <p class="hero-copy">
-        Precursor tags payloads with named captures, clusters near-matches with
-        TLSH/LZJD/FBHash (and optional MRSHv2 adapter mode), and emits JSON designed
-        for SOC pipelines and LLM-guided protocol discovery loops.
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Precursor home">
+      <img src="precursor-mark.svg" alt="Precursor logo" width="44" height="44" />
+      <span>
+        <strong>Precursor</strong>
+        <small>pre-protocol payload triage</small>
+      </span>
+    </a>
+    <nav>
+      <a href="#scenarios">Scenarios</a>
+      <a href="#analyst-loop">Analyst Loop</a>
+      <a href="#llm-loop">LLM Demo</a>
+      <a href="#install">Install</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">precursor.hashdb.io</p>
+        <h1>Find structure in raw payloads before protocol parsers exist.</h1>
+        <p>
+          Precursor tags, clusters, and prioritizes packet, log, and firmware payloads with one JSON-first CLI.
+          It is built for early-stage triage where you need signal now, not after parser engineering.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#install">Install Precursor</a>
+          <a class="button" href="https://github.com/Obsecurus/precursor" target="_blank" rel="noreferrer">GitHub</a>
+          <a class="button" href="#scenarios">Explore Demos</a>
+        </div>
+        <div class="hero-metrics" id="hero-metrics"></div>
+      </div>
+      <aside class="hero-terminal" aria-label="Precursor output teaser">
+        <div class="terminal-head">
+          <span>Signal Teaser</span>
+          <button type="button" id="cycle-teaser">Next</button>
+        </div>
+        <pre><code id="teaser-code"></code></pre>
+      </aside>
+    </section>
+
+    <section class="positioning" aria-labelledby="positioning-title">
+      <div class="section-head">
+        <h2 id="positioning-title">Why Teams Use It</h2>
+        <p>
+          Precursor is the bridge between "we have weird bytes" and "we can confidently scope response or build deeper detection."
+        </p>
+      </div>
+      <div class="position-grid">
+        <article>
+          <h3>Security Ops</h3>
+          <p>
+            Collapse noisy probe traffic into families and rank suspicious payload clusters before writing full parser logic.
+          </p>
+        </article>
+        <article>
+          <h3>DFIR + Firmware</h3>
+          <p>
+            Tag binary fragments and filesystem magic quickly so analysts can prioritize which artifacts deserve deeper reverse engineering.
+          </p>
+        </article>
+        <article>
+          <h3>Detection Engineering</h3>
+          <p>
+            Start with Sigma/PCRE labeling, then use similarity + stats to refine into stable, explainable signal.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="flow" aria-labelledby="flow-title">
+      <div class="section-head">
+        <h2 id="flow-title">Workflow at a Glance</h2>
+      </div>
+      <ol class="flow-steps">
+        <li>
+          <strong>Ingest</strong>
+          <span>String, base64, hex, or raw binary blobs from stdin or folders.</span>
+        </li>
+        <li>
+          <strong>Label</strong>
+          <span>Named PCRE captures (or Sigma selectors) become portable tags.</span>
+        </li>
+        <li>
+          <strong>Cluster</strong>
+          <span>TLSH, LZJD, FBHash (optional MRSHv2 adapter) group near-neighbor payloads.</span>
+        </li>
+        <li>
+          <strong>Refine</strong>
+          <span>`--stats` and protocol hints feed analyst/LLM refinement loops.</span>
+        </li>
+      </ol>
+    </section>
+
+    <section id="scenarios" class="scenarios" aria-labelledby="scenario-title-heading">
+      <div class="section-head">
+        <h2 id="scenario-title-heading">Interactive Scenario Explorer</h2>
+        <p>
+          Click a scenario to inspect command, real output, and run stats captured from public sample corpora.
+        </p>
+      </div>
+      <div class="scenario-layout">
+        <aside id="scenario-list" class="scenario-list" aria-label="Scenario list"></aside>
+        <article class="scenario-view">
+          <h3 id="scenario-name"></h3>
+          <p id="scenario-description"></p>
+          <div id="scenario-meta" class="meta"></div>
+
+          <div id="scenario-tabs" class="tabs" role="tablist" aria-label="Scenario output tabs"></div>
+
+          <div class="terminal">
+            <div class="terminal-head">
+              <span id="scenario-panel-label"></span>
+              <button id="copy-command" type="button">Copy Command</button>
+            </div>
+            <pre><code id="scenario-panel"></code></pre>
+          </div>
+
+          <p id="scenario-links" class="data-links"></p>
+        </article>
+      </div>
+    </section>
+
+    <section id="analyst-loop" class="loop" aria-labelledby="loop-title-heading">
+      <div class="section-head">
+        <h2 id="loop-title-heading">Analyst Refinement Loop</h2>
+        <p>
+          This visual shows how adding targeted tags changes measurable signal across iterations, not just intuition.
+        </p>
+      </div>
+      <div class="loop-layout">
+        <div id="loop-steps" class="loop-steps" aria-label="Loop steps"></div>
+        <article class="loop-detail">
+          <h3 id="loop-step-title"></h3>
+          <p id="loop-step-summary"></p>
+          <div id="loop-bars" class="loop-bars" aria-label="Loop metric bars"></div>
+          <div class="terminal compact">
+            <div class="terminal-head">
+              <span>Step Stats JSON (excerpt)</span>
+            </div>
+            <pre><code id="loop-json"></code></pre>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="llm-loop" class="llm" aria-labelledby="llm-title">
+      <div class="section-head">
+        <h2 id="llm-title">LLM-Guided Discovery Demo</h2>
+        <p>
+          Local Codex CLI consumed Precursor stats + sample NDJSON, proposed a new pattern, then we validated the command on the same corpus.
+        </p>
+      </div>
+      <div class="llm-grid">
+        <article class="llm-card">
+          <h3>Codex Suggestion</h3>
+          <p id="llm-why"></p>
+          <ul id="llm-refinements"></ul>
+          <div class="terminal compact">
+            <div class="terminal-head">
+              <span>Suggested Pattern</span>
+            </div>
+            <pre><code id="llm-pattern"></code></pre>
+          </div>
+          <div class="terminal compact">
+            <div class="terminal-head">
+              <span>Suggested Command</span>
+            </div>
+            <pre><code id="llm-command"></code></pre>
+          </div>
+        </article>
+
+        <article class="llm-card">
+          <h3>Measured Outcome</h3>
+          <div id="llm-deltas" class="delta-grid"></div>
+          <p class="risk"><strong>Risk:</strong> <span id="llm-risk"></span></p>
+          <div class="terminal compact">
+            <div class="terminal-head">
+              <span>Runtime Note</span>
+            </div>
+            <pre><code id="llm-runtime"></code></pre>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="stats-guide" aria-labelledby="stats-guide-title">
+      <div class="section-head">
+        <h2 id="stats-guide-title">How to Read <code>--stats</code></h2>
+      </div>
+      <div class="position-grid">
+        <article>
+          <h3>Input</h3>
+          <p>
+            Track payload volume and size distribution so performance regressions or capture shifts are obvious.
+          </p>
+        </article>
+        <article>
+          <h3>Match</h3>
+          <p>
+            See which tags dominate and whether new patterns add precision or just noise.
+          </p>
+        </article>
+        <article>
+          <h3>Compare + Environment</h3>
+          <p>
+            Validate similarity mode, distance behavior, and runtime context when sharing findings or benchmarking.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="install" class="install" aria-labelledby="install-title">
+      <div class="section-head">
+        <h2 id="install-title">Install and Run in Under 60 Seconds</h2>
+      </div>
+      <div class="terminal">
+        <div class="terminal-head">
+          <span>Quick Start</span>
+          <button id="copy-install" type="button">Copy</button>
+        </div>
+        <pre><code id="install-command">cargo install precursor
+cat samples/scenarios/pre-protocol-packet-triage/payloads.b64 \
+  | precursor -p samples/scenarios/pre-protocol-packet-triage/patterns.pcre \
+      -m base64 -t -d --similarity-mode lzjd -P --protocol-hints --stats</code></pre>
+      </div>
+      <div class="hero-actions">
+        <a class="button primary" href="https://github.com/Obsecurus/precursor" target="_blank" rel="noreferrer">Download on GitHub</a>
+        <a class="button" href="https://crates.io/crates/precursor" target="_blank" rel="noreferrer">Crates.io</a>
+      </div>
+      <p class="sources">
+        Background inspiration and historical context:
+        <a href="https://www.greynoise.io/blog/precursor-a-quantum-leap-in-arbitrary-payload-similarity-analysis" target="_blank" rel="noreferrer">blog post 1</a>
+        and
+        <a href="https://www.labs.greynoise.io/grimoire/2023-10-11-precursor/" target="_blank" rel="noreferrer">blog post 2</a>.
       </p>
-      <div class="hero-cta">
-        <a href="https://github.com/Obsecurus/precursor" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="#demo">Try Demo Scenarios</a>
-      </div>
-    </header>
-
-    <section class="stats">
-      <article>
-        <h2>Dual Input Shapes</h2>
-        <p>Text/base64/hex plus raw-binary blob support via <code>-B</code>.</p>
-      </article>
-      <article>
-        <h2>Similarity Modes</h2>
-        <p>TLSH + LZJD + FBHash implemented, MRSHv2 available behind native adapter feature.</p>
-      </article>
-      <article>
-        <h2>Detection Inputs</h2>
-        <p>PCRE files, Sigma keyword YAML, or inline patterns feed the same triage pipeline.</p>
-      </article>
-    </section>
-
-    <section class="teaser" aria-label="Why install teaser">
-      <div class="teaser-head">
-        <h2>Why Install Precursor</h2>
-        <p>
-          One command turns opaque payload streams into tags, clusters, and
-          protocol confidence output you can act on immediately.
-        </p>
-      </div>
-      <div class="teaser-stage">
-        <article class="teaser-lane">
-          <h3>Input stream</h3>
-          <div class="chip-stack">
-            <span class="chip chip-http">GET /admin HTTP/1.1</span>
-            <span class="chip chip-tls">16 03 03 ...</span>
-            <span class="chip chip-ics">00 01 00 00 00 06 11 03 ...</span>
-          </div>
-        </article>
-        <div class="teaser-arrow" aria-hidden="true">→</div>
-        <article class="teaser-lane">
-          <h3>Tag + similarity</h3>
-          <ul class="teaser-list">
-            <li><code>tags: ["http_method"]</code></li>
-            <li><code>similarity_hash: "lzjd:..."</code></li>
-            <li><code>tlsh_similarities: {...}</code></li>
-          </ul>
-        </article>
-        <div class="teaser-arrow" aria-hidden="true">→</div>
-        <article class="teaser-lane">
-          <h3>Actionable triage</h3>
-          <div class="cluster-view">
-            <div class="cluster-row">
-              <span>http</span>
-              <strong>0.93</strong>
-            </div>
-            <div class="cluster-row">
-              <span>tls</span>
-              <strong>0.90</strong>
-            </div>
-            <div class="cluster-row">
-              <span>firmware_binary</span>
-              <strong>0.86</strong>
-            </div>
-          </div>
-        </article>
-      </div>
-      <div class="teaser-terminal">
-        <div class="code-head">
-          <span>Sample JSON line</span>
-        </div>
-        <pre><code>{"protocol_label":"http","protocol_confidence":0.93,"similarity_hash":"lzjd:128:...","tags":["http_method"]}</code></pre>
-      </div>
-    </section>
-
-    <section id="demo" class="demo">
-      <div class="demo-head">
-        <h2>Scenario Demos</h2>
-        <p>These examples map directly to files committed under <code>samples/scenarios/</code>.</p>
-      </div>
-      <nav class="scenario-tabs" id="scenario-tabs" aria-label="Scenario tabs"></nav>
-      <article class="scenario-panel" id="scenario-panel">
-        <h3 id="scenario-title"></h3>
-        <p id="scenario-description"></p>
-        <div class="code-wrap">
-          <div class="code-head">
-            <span>Command</span>
-            <button id="copy-command" type="button">Copy</button>
-          </div>
-          <pre><code id="scenario-command"></code></pre>
-        </div>
-        <div class="code-wrap">
-          <div class="code-head">
-            <span>Expected signal</span>
-          </div>
-          <pre><code id="scenario-output"></code></pre>
-        </div>
-      </article>
-    </section>
-
-    <section id="reels" class="reels">
-      <div class="demo-head">
-        <h2>Mini Demo Reels</h2>
-        <p>Short terminal playbacks built from real scenario output snapshots.</p>
-      </div>
-      <nav class="reel-tabs" id="reel-tabs" aria-label="Demo reel tabs"></nav>
-      <article class="reel-player">
-        <div class="code-head">
-          <span id="reel-title"></span>
-          <button id="reel-play" type="button">Replay</button>
-        </div>
-        <pre><code id="reel-frame"></code></pre>
-      </article>
-    </section>
-
-    <section id="stats-mode" class="stats-mode">
-      <div class="demo-head">
-        <h2>Stats Mode Explained</h2>
-        <p>
-          Run with <code>--stats</code> to emit a structured run summary on <code>stderr</code> while
-          keeping payload records on <code>stdout</code>.
-        </p>
-      </div>
-      <div class="stats-mode-grid">
-        <article class="stats-legend">
-          <h3>What You Get</h3>
-          <ul>
-            <li><code>Input</code>: volume and size profile of all processed payloads.</li>
-            <li><code>Match</code>: pattern counts, hit totals, and hash generation counts.</li>
-            <li><code>Compare</code>: distance summary when enough pairwise comparisons exist.</li>
-            <li><code>Environment</code>: execution context, including similarity and regex mode.</li>
-          </ul>
-          <p class="stats-note">
-            This makes it easy to add basic health checks, throughput baselines, and release regression
-            guardrails without parsing full result streams.
-          </p>
-        </article>
-        <article class="stats-viz">
-          <h3>Sample Snapshot</h3>
-          <div id="stats-bars" class="stats-bars" aria-label="Sample stats bars"></div>
-          <div class="code-wrap">
-            <div class="code-head">
-              <span>Sample --stats JSON</span>
-            </div>
-            <pre><code id="stats-json"></code></pre>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="use-cases">
-      <h2>High-Impact Use Cases</h2>
-      <div class="cards">
-        <article>
-          <h3>Exploit Spray Triage</h3>
-          <p>Cluster evasive probe families before parser development and identify repeated payload mutations quickly.
-          </p>
-        </article>
-        <article>
-          <h3>Sigma-to-Stream Validation</h3>
-          <p>Reuse Sigma keyword intent directly against shell/log streams to validate or tune detections.</p>
-        </article>
-        <article>
-          <h3>Firmware + DNS Hunt Pivoting</h3>
-          <p>Tag binary fragments and suspicious DNS query families in one JSON-first workflow.</p>
-        </article>
-      </div>
     </section>
   </main>
+
+  <footer>
+    <p>Precursor is open source and built for practical payload triage workflows.</p>
+  </footer>
 
   <script src="app.js"></script>
 </body>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Precursor mark</title>
+  <desc id="desc">Rounded square with packet flow lines and similarity nodes.</desc>
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3de0c1" />
+      <stop offset="1" stop-color="#ff8b3d" />
+    </linearGradient>
+    <linearGradient id="pulse" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#78fff0" />
+      <stop offset="1" stop-color="#ffd09e" />
+    </linearGradient>
+  </defs>
+
+  <rect x="9" y="9" width="110" height="110" rx="23" fill="#08121f" stroke="url(#frame)" stroke-width="4" />
+
+  <path d="M24 39h34l10 12h35" fill="none" stroke="url(#pulse)" stroke-width="6" stroke-linecap="round"
+    stroke-linejoin="round" />
+  <path d="M24 66h22l12-14h20l12 14h14" fill="none" stroke="url(#pulse)" stroke-width="6" stroke-linecap="round"
+    stroke-linejoin="round" opacity="0.92" />
+  <path d="M24 91h30l9-10h40" fill="none" stroke="url(#pulse)" stroke-width="6" stroke-linecap="round"
+    stroke-linejoin="round" opacity="0.86" />
+
+  <circle cx="24" cy="39" r="4" fill="#9ff8eb" />
+  <circle cx="104" cy="39" r="4" fill="#ffc18b" />
+  <circle cx="24" cy="66" r="4" fill="#9ff8eb" />
+  <circle cx="104" cy="66" r="4" fill="#ffc18b" />
+  <circle cx="24" cy="91" r="4" fill="#9ff8eb" />
+  <circle cx="103" cy="91" r="4" fill="#ffc18b" />
+</svg>

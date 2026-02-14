@@ -1,0 +1,69 @@
+{
+  "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
+  "Input": {
+    "Count": 10,
+    "Unique": 10,
+    "AvgSize": "108",
+    "MinSize": 86,
+    "MaxSize": 307,
+    "P95Size": 86,
+    "TotalSize": "1.06KB"
+  },
+  "Match": {
+    "Patterns": 5,
+    "TotalMatches": 30,
+    "Matches": [
+      {
+        "Name": "exploit_class_path",
+        "Matches": 9
+      },
+      {
+        "Name": "ldap_scheme",
+        "Matches": 1
+      },
+      {
+        "Name": "java_user_agent",
+        "Matches": 9
+      },
+      {
+        "Name": "urlencoded_jndi",
+        "Matches": 1
+      },
+      {
+        "Name": "http_method",
+        "Matches": 10
+      }
+    ],
+    "HashesGenerated": 10,
+    "AvgSize": "108",
+    "MinSize": 86,
+    "MaxSize": 307,
+    "P95Size": 307,
+    "TotalSize": "3.17KB"
+  },
+  "Compare": {
+    "Similarities": 45,
+    "AvgDistance": "40",
+    "MinDistance": 19,
+    "MaxDistance": 77,
+    "P95Distance": 76
+  },
+  "Environment": {
+    "Version": "0.2.1",
+    "DurationSeconds": "0.00",
+    "ProcessingRate": "1.06KB/ms",
+    "SimilarityMode": "lzjd",
+    "RegexEngine": "pcre2",
+    "InputMode": "string",
+    "HashFunction": "48_1",
+    "DistanceThreshold": 100,
+    "DiffEnabled": true,
+    "OnlyOutputSimilar": false,
+    "LengthEnabled": false,
+    "InputJSONKey": "",
+    "SinglePacketInference": true,
+    "AbstainThreshold": 0.65,
+    "ProtocolTopK": 3,
+    "SigmaRulesLoaded": 0
+  }
+}

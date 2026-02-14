@@ -1,0 +1,142 @@
+{
+  "---PRECURSOR_PROTOCOL_HINTS---": "Candidate payload clusters for LLM-guided protocol discovery.",
+  "SimilarityMode": "lzjd",
+  "DistanceThreshold": 100,
+  "Candidates": [
+    {
+      "xxh3_64_sum": "57101f1f1e986f6e",
+      "similarity_hash": "lzjd:30:84bdaa48877d88bfe2a48fbe356e7a78",
+      "neighbor_count": 4,
+      "tags": [
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_10"
+      ],
+      "protocol_label": null,
+      "protocol_confidence": null,
+      "protocol_abstained": null
+    },
+    {
+      "xxh3_64_sum": "66ff494dd06cd34",
+      "similarity_hash": "lzjd:27:5d947215c7a88fae1f28e70738ac0b1f",
+      "neighbor_count": 3,
+      "tags": [
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_0",
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_6",
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_11"
+      ],
+      "protocol_label": null,
+      "protocol_confidence": null,
+      "protocol_abstained": null
+    },
+    {
+      "xxh3_64_sum": "655dee9b52a62a6c",
+      "similarity_hash": "lzjd:37:3aca6111ee8dc822e0e920a6a141ca85",
+      "neighbor_count": 2,
+      "tags": [
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_18"
+      ],
+      "protocol_label": null,
+      "protocol_confidence": null,
+      "protocol_abstained": null
+    },
+    {
+      "xxh3_64_sum": "be18a7745de37edf",
+      "similarity_hash": "lzjd:35:d83c823cfbf185b907e58cd36375e488",
+      "neighbor_count": 1,
+      "tags": [
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_4"
+      ],
+      "protocol_label": null,
+      "protocol_confidence": null,
+      "protocol_abstained": null
+    },
+    {
+      "xxh3_64_sum": "2300691bae0b63a8",
+      "similarity_hash": "lzjd:47:0fa2ce45986386ef690ca05e11b6f00d",
+      "neighbor_count": 0,
+      "tags": [
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_3",
+        "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_6"
+      ],
+      "protocol_label": null,
+      "protocol_confidence": null,
+      "protocol_abstained": null
+    }
+  ]
+}
+{
+  "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
+  "Input": {
+    "Count": 6,
+    "Unique": 6,
+    "AvgSize": "46",
+    "MinSize": 32,
+    "MaxSize": 73,
+    "P95Size": 46,
+    "TotalSize": "277B"
+  },
+  "Match": {
+    "Patterns": 19,
+    "TotalMatches": 8,
+    "Matches": [
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_18",
+        "Matches": 1
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_4",
+        "Matches": 1
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_6",
+        "Matches": 2
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_10",
+        "Matches": 1
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_3",
+        "Matches": 1
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_0",
+        "Matches": 1
+      },
+      {
+        "Name": "sigma_d2bd6b47_0fe3_4eec_846d_6d657c8ee6ff_keywords_11",
+        "Matches": 1
+      }
+    ],
+    "HashesGenerated": 5,
+    "AvgSize": "50",
+    "MinSize": 39,
+    "MaxSize": 73,
+    "P95Size": 73,
+    "TotalSize": "396B"
+  },
+  "Compare": {
+    "Similarities": 10,
+    "AvgDistance": "78",
+    "MinDistance": 75,
+    "MaxDistance": 81,
+    "P95Distance": 79
+  },
+  "Environment": {
+    "Version": "0.2.1",
+    "DurationSeconds": "0.00",
+    "ProcessingRate": "277B/ms",
+    "SimilarityMode": "lzjd",
+    "RegexEngine": "pcre2",
+    "InputMode": "string",
+    "HashFunction": "48_1",
+    "DistanceThreshold": 100,
+    "DiffEnabled": true,
+    "OnlyOutputSimilar": false,
+    "LengthEnabled": false,
+    "InputJSONKey": "",
+    "SinglePacketInference": false,
+    "AbstainThreshold": 0.65,
+    "ProtocolTopK": 3,
+    "SigmaRulesLoaded": 1
+  }
+}

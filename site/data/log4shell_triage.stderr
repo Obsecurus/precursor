@@ -1,0 +1,206 @@
+{
+  "---PRECURSOR_PROTOCOL_HINTS---": "Candidate payload clusters for LLM-guided protocol discovery.",
+  "SimilarityMode": "fbhash",
+  "DistanceThreshold": 100,
+  "Candidates": [
+    {
+      "xxh3_64_sum": "612a4f3803dc2110",
+      "similarity_hash": "fbhash:227:294cb799466c30672fbc02a727755001",
+      "neighbor_count": 9,
+      "tags": [
+        "http_method",
+        "urlencoded_jndi",
+        "ldap_scheme"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "312e3f63a899a72e",
+      "similarity_hash": "fbhash:80:de765fcd8861dc3c3b17fbe45abb4ae3",
+      "neighbor_count": 8,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "b4d9e2449d8ee0b6",
+      "similarity_hash": "fbhash:80:c8f490e698c2ba57c1f88374503b162d",
+      "neighbor_count": 7,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "2f77d6f6ecbfcdf1",
+      "similarity_hash": "fbhash:80:2d4e564aa0f5e8c207fefe1523d3af85",
+      "neighbor_count": 6,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "170d6ca84449255c",
+      "similarity_hash": "fbhash:80:74d9a54cb165463b95315476c44ce79a",
+      "neighbor_count": 5,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "ffd960bd567bf866",
+      "similarity_hash": "fbhash:80:f82eac81c88020d591f3242c2c5a1e72",
+      "neighbor_count": 4,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "5fc49418b456e085",
+      "similarity_hash": "fbhash:80:a2c00f1789ec419679f3592d6fa0dbc1",
+      "neighbor_count": 3,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "45d0ebaa5f04b7a6",
+      "similarity_hash": "fbhash:80:819a4fd1eaab6918df7e04cf101d4090",
+      "neighbor_count": 2,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "8e17ec202c88d9a4",
+      "similarity_hash": "fbhash:80:d576f484ce2c3e7055ef96680c4d5f5d",
+      "neighbor_count": 1,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "90519648a3fc0f7",
+      "similarity_hash": "fbhash:80:b8f9919d9ff2b5b3f2082ef0426dc978",
+      "neighbor_count": 0,
+      "tags": [
+        "http_method",
+        "exploit_class_path",
+        "java_user_agent"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    }
+  ]
+}
+{
+  "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
+  "Input": {
+    "Count": 10,
+    "Unique": 10,
+    "AvgSize": "108",
+    "MinSize": 86,
+    "MaxSize": 307,
+    "P95Size": 86,
+    "TotalSize": "1.06KB"
+  },
+  "Match": {
+    "Patterns": 5,
+    "TotalMatches": 30,
+    "Matches": [
+      {
+        "Name": "java_user_agent",
+        "Matches": 9
+      },
+      {
+        "Name": "http_method",
+        "Matches": 10
+      },
+      {
+        "Name": "urlencoded_jndi",
+        "Matches": 1
+      },
+      {
+        "Name": "ldap_scheme",
+        "Matches": 1
+      },
+      {
+        "Name": "exploit_class_path",
+        "Matches": 9
+      }
+    ],
+    "HashesGenerated": 10,
+    "AvgSize": "108",
+    "MinSize": 86,
+    "MaxSize": 307,
+    "P95Size": 307,
+    "TotalSize": "3.17KB"
+  },
+  "Compare": {
+    "Similarities": 45,
+    "AvgDistance": "49",
+    "MinDistance": 39,
+    "MaxDistance": 88,
+    "P95Distance": 88
+  },
+  "Environment": {
+    "Version": "0.2.1",
+    "DurationSeconds": "0.00",
+    "ProcessingRate": "1.06KB/ms",
+    "SimilarityMode": "fbhash",
+    "RegexEngine": "pcre2",
+    "InputMode": "string",
+    "HashFunction": "48_1",
+    "DistanceThreshold": 100,
+    "DiffEnabled": true,
+    "OnlyOutputSimilar": false,
+    "LengthEnabled": false,
+    "InputJSONKey": "",
+    "SinglePacketInference": true,
+    "AbstainThreshold": 0.65,
+    "ProtocolTopK": 3,
+    "SigmaRulesLoaded": 0
+  }
+}

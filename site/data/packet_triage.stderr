@@ -1,0 +1,116 @@
+{
+  "---PRECURSOR_PROTOCOL_HINTS---": "Candidate payload clusters for LLM-guided protocol discovery.",
+  "SimilarityMode": "lzjd",
+  "DistanceThreshold": 100,
+  "Candidates": [
+    {
+      "xxh3_64_sum": "e40a7db551b7707f",
+      "similarity_hash": "lzjd:8:498bfc24c71b6f6ab1e57dcd1520d55d",
+      "neighbor_count": 3,
+      "tags": [
+        "modbus_mbap"
+      ],
+      "protocol_label": "unknown",
+      "protocol_confidence": 0.0,
+      "protocol_abstained": true
+    },
+    {
+      "xxh3_64_sum": "334a496385b190eb",
+      "similarity_hash": "lzjd:17:e4ac19d2d0f0cb47627835204f9bb5e5",
+      "neighbor_count": 2,
+      "tags": [
+        "ssh_banner"
+      ],
+      "protocol_label": "ssh",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "e05fe49d391d884a",
+      "similarity_hash": "lzjd:21:bd02b220d6815f4fa7dc7a9c6f55e468",
+      "neighbor_count": 1,
+      "tags": [
+        "tls_handshake_record"
+      ],
+      "protocol_label": "tls",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    },
+    {
+      "xxh3_64_sum": "53fc4f37dbc42574",
+      "similarity_hash": "lzjd:54:eeab9896f636bae081b935f08a3a4981",
+      "neighbor_count": 0,
+      "tags": [
+        "http_method"
+      ],
+      "protocol_label": "http",
+      "protocol_confidence": 0.99,
+      "protocol_abstained": false
+    }
+  ]
+}
+{
+  "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
+  "Input": {
+    "Count": 5,
+    "Unique": 5,
+    "AvgSize": "39",
+    "MinSize": 12,
+    "MaxSize": 82,
+    "P95Size": 50,
+    "TotalSize": "194B"
+  },
+  "Match": {
+    "Patterns": 5,
+    "TotalMatches": 4,
+    "Matches": [
+      {
+        "Name": "modbus_mbap",
+        "Matches": 1
+      },
+      {
+        "Name": "ssh_banner",
+        "Matches": 1
+      },
+      {
+        "Name": "tls_handshake_record",
+        "Matches": 1
+      },
+      {
+        "Name": "http_method",
+        "Matches": 1
+      }
+    ],
+    "HashesGenerated": 4,
+    "AvgSize": "41",
+    "MinSize": 12,
+    "MaxSize": 82,
+    "P95Size": 50,
+    "TotalSize": "165B"
+  },
+  "Compare": {
+    "Similarities": 6,
+    "AvgDistance": "95",
+    "MinDistance": 84,
+    "MaxDistance": 100,
+    "P95Distance": 100
+  },
+  "Environment": {
+    "Version": "0.2.1",
+    "DurationSeconds": "0.00",
+    "ProcessingRate": "194B/ms",
+    "SimilarityMode": "lzjd",
+    "RegexEngine": "pcre2",
+    "InputMode": "base64",
+    "HashFunction": "48_1",
+    "DistanceThreshold": 100,
+    "DiffEnabled": true,
+    "OnlyOutputSimilar": false,
+    "LengthEnabled": false,
+    "InputJSONKey": "",
+    "SinglePacketInference": true,
+    "AbstainThreshold": 0.65,
+    "ProtocolTopK": 3,
+    "SigmaRulesLoaded": 0
+  }
+}
