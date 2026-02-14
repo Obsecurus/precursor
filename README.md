@@ -1,12 +1,17 @@
 # precursor
 
 <p align="center">
-  <img src="assets/logo/precursor-logo.svg" alt="Precursor logo">
+  <img src="assets/logo/precursor-logo.svg" alt="Precursor logo" width="720">
 </p>
 
-`precursor` is a CLI for **pre-protocol payload tagging + similarity clustering**.
-It combines PCRE2 named-capture matching, TLSH/LZJD/FBHash similarity, optional MRSHv2 adapter mode, and JSON outputs that are easy to feed into detection engineering and LLM-assisted protocol discovery loops.
-Project page: https://precursor.hashdb.io
+<p align="center">
+  <a href="https://precursor.hashdb.io">Live demos</a> ·
+  <a href="https://github.com/Obsecurus/precursor/tree/main/samples/scenarios">Scenario corpus</a> ·
+  <a href="https://crates.io/crates/precursor">Crates.io</a>
+</p>
+
+`precursor` is a CLI for **pre-protocol payload tagging + similarity clustering** across packet payloads, logs, and raw binary fragments.
+It combines PCRE2 named-capture matching, TLSH/LZJD/FBHash similarity, optional MRSHv2 adapter mode, and JSON outputs designed for fast triage loops before full parser or protocol tooling exists.
 
 ## Release 0.2.1 Highlights
 

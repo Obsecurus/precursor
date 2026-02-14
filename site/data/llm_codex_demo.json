@@ -1,0 +1,11 @@
+{
+  "why_it_matters": "Signal improved from HTTP-only to exploit-aware tagging, but data still splits into a 9-sample Java/class cluster plus one encoded JNDI+LDAP outlier; a single high-confidence JNDI-remote tag will improve triage precision.",
+  "refinements": [
+    "Promote JNDI+remote-scheme evidence to a dedicated primary tag; keep java_user_agent and exploit_class_path as context tags.",
+    "Use one regex that tolerates raw and URL-encoded `${jndi:` forms to avoid fragmented tagging.",
+    "Track cluster separation by tag-set (9 similar exploit-class requests vs 1 encoded JNDI request) to prioritize analyst review."
+  ],
+  "new_pattern": "(?i)(?<jndi_remote_lookup>(?:\\$\\{|%24%7b)[^\\r\\n]{0,64}?(?:jndi|%6a%6e%64%69)\\s*(?::|%3a)\\s*(?:ldap|ldaps|rmi|dns|iiop|nis|http|https)(?::|%3a|//|%2f%2f))",
+  "next_command": "cat samples/scenarios/public-log4shell-foxit-pcap/payloads.string | precursor -p samples/scenarios/public-log4shell-foxit-pcap/patterns.pcre '(?<jndi_remote_lookup>(?:\\$\\{|%24%7b)[^\\r\\n]{0,64}?(?:jndi|%6a%6e%64%69)\\s*(?::|%3a)\\s*(?:ldap|ldaps|rmi|dns|iiop|nis|http|https)(?::|%3a|//|%2f%2f))' -m string -t -d --similarity-mode fbhash -P --protocol-hints --stats",
+  "risk": "May still miss heavily obfuscated `${${lower:j}...}` payloads and can false-match benign encoded strings containing `jndi` plus a URI scheme."
+}

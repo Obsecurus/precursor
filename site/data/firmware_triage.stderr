@@ -1,0 +1,65 @@
+{
+  "---PRECURSOR_STATISTICS---": "This JSON is output to STDERR so that you can parse stats separate from the primary output.",
+  "Input": {
+    "Count": 4,
+    "Unique": 4,
+    "AvgSize": "2331",
+    "MinSize": 109,
+    "MaxSize": 4096,
+    "P95Size": 4096,
+    "TotalSize": "9.11KB"
+  },
+  "Match": {
+    "Patterns": 4,
+    "TotalMatches": 4,
+    "Matches": [
+      {
+        "Name": "cramfs_magic",
+        "Matches": 1
+      },
+      {
+        "Name": "squashfs_magic",
+        "Matches": 1
+      },
+      {
+        "Name": "gzip_magic",
+        "Matches": 1
+      },
+      {
+        "Name": "romfs_magic",
+        "Matches": 1
+      }
+    ],
+    "HashesGenerated": 4,
+    "AvgSize": "2331",
+    "MinSize": 109,
+    "MaxSize": 4096,
+    "P95Size": 4096,
+    "TotalSize": "9.11KB"
+  },
+  "Compare": {
+    "Similarities": 6,
+    "AvgDistance": "79",
+    "MinDistance": 56,
+    "MaxDistance": 91,
+    "P95Distance": 85
+  },
+  "Environment": {
+    "Version": "0.2.1",
+    "DurationSeconds": "0.00",
+    "ProcessingRate": "9.11KB/ms",
+    "SimilarityMode": "lzjd",
+    "RegexEngine": "pcre2",
+    "InputMode": "binary",
+    "HashFunction": "48_1",
+    "DistanceThreshold": 100,
+    "DiffEnabled": true,
+    "OnlyOutputSimilar": false,
+    "LengthEnabled": false,
+    "InputJSONKey": "",
+    "SinglePacketInference": true,
+    "AbstainThreshold": 0.65,
+    "ProtocolTopK": 3,
+    "SigmaRulesLoaded": 0
+  }
+}
